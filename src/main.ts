@@ -4,195 +4,17 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { mat4 } from 'gl-matrix'
 import * as dat from 'dat.gui';
+import { Material, PhongMaterial, EmissiveMaterial } from './Material';
+import { Mesh, cube } from './Mesh';
 const cameraPosition = [-20, 180, 250];
 
-function loadShader(filename: string) {
-  return new Promise<string>((res, rej) => {
-   try {
-     const loader = new THREE.FileLoader;
-     loader.load(filename, data => {
-       res(data as string);
-     })
-   } catch (error) {
-      rej(error);
-   }
+
+
+function compile(gl: WebGLRenderingContext, m: Material) {
+  return get_rhi_program(gl, m.vsSrc, m.fsSrc, {
+    uniforms: m.uniform_keys,
+    attribs: m.attibute_keys
   })
-}
-
-const LightCubeVertexShader = await loadShader("../shaders/lightShader/vertex.glsl")
-
-const LightCubeFragmentShader =await loadShader("../shaders/lightShader/fragment.glsl")
-
-const PhongVertexShader = await loadShader("../shaders/phongShader/vertex.glsl")
-
-const PhongFragmentShader = await loadShader("../shaders/phongShader/fragment.glsl")
-
-
-interface ShaderLocations {
-  uniforms: string[],
-  attribs: string[]
-}
-class Material {
-  flatten_uniforms: string[] = []
-  flatten_attribs: string[] = []
-  uniforms: { [key: string]: ShaderVar }
-  attribs: string[]
-  vsSrc: string = ""
-  fsSrc: string = ""
-  constructor(uniforms: { [key: string]: ShaderVar }, attribs: string[], vsSrc: string, fsSrc: string) {
-    this.flatten_uniforms = ['uModelViewMatrix', 'uProjectionMatrix', 'uCameraPos', 'uLightPos'];
-    this.flatten_uniforms.push(...Object.keys(uniforms));
-    this.flatten_attribs.push(...Object.keys(attribs));
-    this.uniforms = uniforms;
-    this.attribs = attribs;
-    this.fsSrc = fsSrc;
-    this.vsSrc = vsSrc;
-  }
-  setMeshAttribs(attribs: string[]) {
-    this.flatten_attribs.push(...attribs)
-  }
-  compile(gl: WebGLRenderingContext) {
-    return new RHIShader(gl, this.vsSrc, this.fsSrc, {
-      uniforms: this.flatten_uniforms,
-      attribs: this.flatten_attribs
-    })
-  }
-}
-
-class PhongMaterial extends Material {
-  constructor(color: number[], colorMap: string, specular: number[], intensity: number) {
-    let textureSample = 0;
-
-    if (colorMap != null) {
-      textureSample = 1;
-      super({
-        'uTextureSample': { type: '1i', value: textureSample },
-        'uSampler': { type: 'texture', value: colorMap },
-        'uKd': { type: '3fv', value: color },
-        'uKs': { type: '3fv', value: specular },
-        'uLightIntensity': { type: '1f', value: intensity }
-      }, [], PhongVertexShader, PhongFragmentShader);
-    } else {
-      //console.log(color);
-      super({
-        'uTextureSample': { type: '1i', value: textureSample },
-        'uKd': { type: '3fv', value: color },
-        'uKs': { type: '3fv', value: specular },
-        'uLightIntensity': { type: '1f', value: intensity }
-      }, [], PhongVertexShader, PhongFragmentShader);
-    }
-
-  }
-}
-
-class EmissiveMaterial extends Material {
-  intensity: number
-  color: number[]
-  constructor(lightIntensity: number, lightColor: number[]) {
-    super({
-      'uLigIntensity': { type: '1f', value: lightIntensity },
-      'uLightColor': { type: '3fv', value: lightColor }
-    }, [], LightCubeVertexShader, LightCubeFragmentShader);
-
-    this.intensity = lightIntensity;
-    this.color = lightColor;
-  }
-}
-
-class Mesh {
-  indices: number[];
-  count: number;
-  hasVertices: boolean;
-  hasNormals: boolean;
-  hasTexcoords: boolean;
-  vertices?: Float32Array;
-  verticesName?: string;
-  normals?: Float32Array;
-  normalsName?: string;
-  texcoords?: Float32Array;
-  texcoordsName?: string;
-  constructor(indices: number[], verticesAttrib?: { name: string; array: Float32Array; }, normalsAttrib?: { name: string; array: Float32Array; }, texcoordsAttrib?: { name: string; array: Float32Array; }) {
-    this.indices = indices;
-    this.count = indices.length;
-    this.hasVertices = false;
-    this.hasNormals = false;
-    this.hasTexcoords = false;
-
-    if (verticesAttrib != null) {
-      this.hasVertices = true;
-      this.vertices = verticesAttrib.array;
-      this.verticesName = verticesAttrib.name;
-    }
-    if (normalsAttrib != null) {
-      this.hasNormals = true;
-      this.normals = normalsAttrib.array;
-      this.normalsName = normalsAttrib.name;
-    }
-    if (texcoordsAttrib != null) {
-      this.hasTexcoords = true;
-      this.texcoords = texcoordsAttrib.array;
-      this.texcoordsName = texcoordsAttrib.name;
-    }
-  }
-
-  static cube() {
-    const positions = [
-      // Front face
-      -1.0, -1.0, 1.0,
-      1.0, -1.0, 1.0,
-      1.0, 1.0, 1.0,
-      -1.0, 1.0, 1.0,
-
-      // Back face
-      -1.0, -1.0, -1.0,
-      -1.0, 1.0, -1.0,
-      1.0, 1.0, -1.0,
-      1.0, -1.0, -1.0,
-
-      // Top face
-      -1.0, 1.0, -1.0,
-      -1.0, 1.0, 1.0,
-      1.0, 1.0, 1.0,
-      1.0, 1.0, -1.0,
-
-      // Bottom face
-      -1.0, -1.0, -1.0,
-      1.0, -1.0, -1.0,
-      1.0, -1.0, 1.0,
-      -1.0, -1.0, 1.0,
-
-      // Right face
-      1.0, -1.0, -1.0,
-      1.0, 1.0, -1.0,
-      1.0, 1.0, 1.0,
-      1.0, -1.0, 1.0,
-
-      // Left face
-      -1.0, -1.0, -1.0,
-      -1.0, -1.0, 1.0,
-      -1.0, 1.0, 1.0,
-      -1.0, 1.0, -1.0,
-    ];
-    const indices = [
-      0, 1, 2, 0, 2, 3,    // front
-      4, 5, 6, 4, 6, 7,    // back
-      8, 9, 10, 8, 10, 11,   // top
-      12, 13, 14, 12, 14, 15,   // bottom
-      16, 17, 18, 16, 18, 19,   // right
-      20, 21, 22, 20, 22, 23,   // left
-    ];
-    return new Mesh(indices, { name: 'aVertexPosition', array: new Float32Array(positions) });
-  }
-}
-
-class PointLight {
-  mesh: Mesh;
-  mat: EmissiveMaterial;
-
-  constructor(lightIntensity, lightColor) {
-    this.mesh = Mesh.cube();
-    this.mat = new EmissiveMaterial(lightIntensity, lightColor);
-  }
 }
 
 interface RHI_Program {
@@ -205,34 +27,20 @@ interface RHI_Program {
   }
 }
 
-interface ShaderVar {
-  type: string,
-  value: any
-}
-
-class RHIShader {
-  gl: WebGLRenderingContext;
-  program: RHI_Program;
-  constructor(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, shaderLocations: ShaderLocations) {
-    this.gl = gl;
-    const vs = this.compileShader(vsSrc, this.gl.VERTEX_SHADER);
-    const fs = this.compileShader(fsSrc, this.gl.FRAGMENT_SHADER);
-
-    this.program = this.addShaderLocations({ glShaderProgram: this.getProgramLinked(vs, fs) }, shaderLocations);
-  }
-
-  compileShader(shaderSource: string, shaderType: number) {
-    const shader = this.gl.createShader(shaderType)!;
-    this.gl.shaderSource(shader, shaderSource);
-    this.gl.compileShader(shader);
-    if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+function get_rhi_program(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, shaderLocations: {
+  uniforms: string[],
+  attribs: string[]
+}): RHI_Program {
+  function compileShader(shaderSource: string, shaderType: number) {
+    const shader = gl.createShader(shaderType)!;
+    gl.shaderSource(shader, shaderSource);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       console.error("shader compiler error");
     }
     return shader;
   }
-
-  getProgramLinked(vs: WebGLShader, fs: WebGLShader) {
-    const gl = this.gl;
+  function getProgramLinked(vs: WebGLShader, fs: WebGLShader) {
     const prog = gl.createProgram()!;
     gl.attachShader(prog, vs);
     gl.attachShader(prog, fs);
@@ -244,8 +52,11 @@ class RHIShader {
     return prog;
   };
 
-  addShaderLocations(result: RHI_Program, shaderLocations: ShaderLocations) {
-    const gl = this.gl;
+
+  function addShaderLocations(result: RHI_Program, shaderLocations: {
+    uniforms: string[],
+    attribs: string[]
+  }) {
     result.uniforms = {};
     result.attribs = {};
 
@@ -263,13 +74,18 @@ class RHIShader {
         });
       }
     }
-    return result;
   }
+
+  const vs = compileShader(vsSrc, gl.VERTEX_SHADER);
+  const fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
+  let rhi_program = { glShaderProgram: getProgramLinked(vs, fs) }
+  addShaderLocations(rhi_program, shaderLocations);
+  return rhi_program;
 }
 
 
 
-class RHI_Renderer {
+class MeshRenderer {
 
   private vertexBuffer: WebGLBuffer;
   private normalBuffer: WebGLBuffer;
@@ -278,7 +94,7 @@ class RHI_Renderer {
   gl: WebGLRenderingContext;
   mesh: Mesh;
   material: Material;
-  shader: RHIShader;
+  program: RHI_Program;
 
   constructor(gl: WebGLRenderingContext, mesh: Mesh, material: Material) {
     this.gl = gl;
@@ -317,7 +133,7 @@ class RHI_Renderer {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
     this.material.setMeshAttribs(extraAttribs);
-    this.shader = this.material.compile(gl);
+    this.program = compile(gl, this.material)
   }
 
   draw(camera, transform) {
@@ -340,14 +156,14 @@ class RHI_Renderer {
       const offset = 0;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
       gl.vertexAttribPointer(
-        this.shader.program.attribs[this.mesh.verticesName],
+        this.program.attribs[this.mesh.verticesName],
         numComponents,
         type,
         normalize,
         stride,
         offset);
       gl.enableVertexAttribArray(
-        this.shader.program.attribs[this.mesh.verticesName]);
+        this.program.attribs[this.mesh.verticesName]);
     }
 
     if (this.mesh.hasNormals) {
@@ -358,14 +174,14 @@ class RHI_Renderer {
       const offset = 0;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
       gl.vertexAttribPointer(
-        this.shader.program.attribs[this.mesh.normalsName],
+        this.program.attribs[this.mesh.normalsName],
         numComponents,
         type,
         normalize,
         stride,
         offset);
       gl.enableVertexAttribArray(
-        this.shader.program.attribs[this.mesh.normalsName]);
+        this.program.attribs[this.mesh.normalsName]);
     }
 
     if (this.mesh.hasTexcoords) {
@@ -376,56 +192,56 @@ class RHI_Renderer {
       const offset = 0;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.texcoordBuffer);
       gl.vertexAttribPointer(
-        this.shader.program.attribs[this.mesh.texcoordsName],
+        this.program.attribs[this.mesh.texcoordsName],
         numComponents,
         type,
         normalize,
         stride,
         offset);
       gl.enableVertexAttribArray(
-        this.shader.program.attribs[this.mesh.texcoordsName]);
+        this.program.attribs[this.mesh.texcoordsName]);
     }
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indicesBuffer);
 
-    gl.useProgram(this.shader.program.glShaderProgram);
+    gl.useProgram(this.program.glShaderProgram);
 
     gl.uniformMatrix4fv(
-      this.shader.program.uniforms.uProjectionMatrix,
+      this.program.uniforms.uProjectionMatrix,
       false,
       projectionMatrix);
     gl.uniformMatrix4fv(
-      this.shader.program.uniforms.uModelViewMatrix,
+      this.program.uniforms.uModelViewMatrix,
       false,
       modelViewMatrix);
 
     // Specific the camera uniforms
     gl.uniform3fv(
-      this.shader.program.uniforms.uCameraPos,
+      this.program.uniforms.uCameraPos,
       [camera.position.x, camera.position.y, camera.position.z]);
 
     for (let k in this.material.uniforms) {
       if (this.material.uniforms[k].type == 'matrix4fv') {
         gl.uniformMatrix4fv(
-          this.shader.program.uniforms[k],
+          this.program.uniforms[k],
           false,
           this.material.uniforms[k].value);
       } else if (this.material.uniforms[k].type == '3fv') {
         gl.uniform3fv(
-          this.shader.program.uniforms[k],
+          this.program.uniforms[k],
           this.material.uniforms[k].value);
       } else if (this.material.uniforms[k].type == '1f') {
         gl.uniform1f(
-          this.shader.program.uniforms[k],
+          this.program.uniforms[k],
           this.material.uniforms[k].value);
       } else if (this.material.uniforms[k].type == '1i') {
         gl.uniform1i(
-          this.shader.program.uniforms[k],
+          this.program.uniforms[k],
           this.material.uniforms[k].value);
       } else if (this.material.uniforms[k].type == 'texture') {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.material.uniforms[k].value.texture);
-        gl.uniform1i(this.shader.program.uniforms[k], 0);
+        gl.uniform1i(this.program.uniforms[k], 0);
       }
     }
 
@@ -536,7 +352,7 @@ function loadOBJ(renderer, path, name) {
               let myMaterial = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
                 renderer.lights[0].entity.mat.intensity);
 
-              let meshRender = new RHI_Renderer(renderer.gl, mesh, myMaterial);
+              let meshRender = new MeshRenderer(renderer.gl, mesh, myMaterial);
               renderer.addMesh(meshRender);
             }
           });
@@ -556,7 +372,7 @@ class WebGLRenderer {
     this.camera = camera;
   }
 
-  addLight(light) { this.lights.push({ entity: light, meshRender: new RHI_Renderer(this.gl, light.mesh, light.mat) }); }
+  addLight(light) { this.lights.push({ entity: light, meshRender: new MeshRenderer(this.gl, light.mesh, light.mat) }); }
 
   addMesh(mesh) { this.meshes.push(mesh); }
 
@@ -588,8 +404,8 @@ class WebGLRenderer {
           const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ];
           let meshTrans = new TRSTransform(modelTranslation, modelScale);
 
-          this.gl.useProgram(mesh.shader.program.glShaderProgram);
-          this.gl.uniform3fv(mesh.shader.program.uniforms.uLightPos, lightPos);
+          this.gl.useProgram(mesh.program.glShaderProgram);
+          this.gl.uniform3fv(mesh.program.uniforms.uLightPos, lightPos);
           mesh.draw(this.camera, meshTrans);
         }
       }
@@ -610,34 +426,40 @@ function main() {
   canvas.height = window.screen.height;
   const gl = canvas.getContext('webgl')!;
 
-  const camera = new THREE.PerspectiveCamera(75, (gl.canvas as HTMLCanvasElement).clientWidth / (gl.canvas as HTMLCanvasElement).clientHeight);
-  camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+  const camera_init = () => {
+    const camera = new THREE.PerspectiveCamera(75, (gl.canvas as HTMLCanvasElement).clientWidth / (gl.canvas as HTMLCanvasElement).clientHeight);
+    camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
 
-  const cameraControls = new OrbitControls(camera, canvas);
-  cameraControls.enableZoom = true;
-  cameraControls.enableRotate = true;
-  cameraControls.enablePan = true;
-  cameraControls.rotateSpeed = 0.3;
-  cameraControls.zoomSpeed = 1.0;
-  cameraControls.panSpeed = 2.0;
-  cameraControls.target.set(0, 1, 0);
-
-  {
+    const cameraControls = new OrbitControls(camera, canvas);
+    cameraControls.enableZoom = true;
+    cameraControls.enableRotate = true;
+    cameraControls.enablePan = true;
+    cameraControls.rotateSpeed = 0.3;
+    cameraControls.zoomSpeed = 1.0;
+    cameraControls.panSpeed = 2.0;
+    cameraControls.target.set(0, 1, 0);
     const setSize = (width: number, height: number) => {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     }
     setSize(canvas.clientWidth, canvas.clientHeight);
     window.addEventListener('resize', () => setSize(canvas.clientWidth, canvas.clientHeight));
+    return { camera, cameraControls };
   }
 
-  const pointLight = new PointLight(250, [1, 1, 1]);
+  const { camera, cameraControls } = camera_init()
+
+
+  const pointLight = {
+    mesh: cube(),
+    mat: new EmissiveMaterial(250, [1, 1, 1])
+  };
 
   const renderer = new WebGLRenderer(gl, camera);
   renderer.addLight(pointLight);
   loadOBJ(renderer, 'assets/mary/', 'Marry');
 
-  var guiParams = {
+  const guiParams = {
     modelTransX: 0,
     modelTransY: 0,
     modelTransZ: 0,
