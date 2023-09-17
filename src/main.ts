@@ -271,11 +271,13 @@ class Mesh {
 }
 
 class PointLight {
+  mesh: Mesh;
+  mat: EmissiveMaterial;
 
-  constructor(lightIntensity: number, lightColor: number[]) {
-    mesh: Mesh.cube();
-    mat: new EmissiveMaterial(lightIntensity, lightColor);
-  }
+  constructor(lightIntensity, lightColor) {
+    this.mesh = Mesh.cube();
+    this.mat = new EmissiveMaterial(lightIntensity, lightColor);
+}
 }
 
 interface RHI_Program {
