@@ -6,103 +6,27 @@ import { mat4 } from 'gl-matrix'
 import * as dat from 'dat.gui';
 const cameraPosition = [-20, 180, 250];
 
-const LightCubeVertexShader = `
-attribute vec3 aVertexPosition;
-
-uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjectionMatrix;
-
-
-void main(void) {
-
-  gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aVertexPosition, 1.0);
-
+function loadShader(filename: string) {
+  return new Promise<string>((res, rej) => {
+   try {
+     const loader = new THREE.FileLoader;
+     loader.load(filename, data => {
+       res(data as string);
+     })
+   } catch (error) {
+      rej(error);
+   }
+  })
 }
-`;
 
-const LightCubeFragmentShader = `
-#ifdef GL_ES
-precision mediump float;
-#endif
+const LightCubeVertexShader = await loadShader("../shaders/lightShader/vertex.glsl")
 
-uniform float uLigIntensity;
-uniform vec3 uLightRadiance;
+const LightCubeFragmentShader =await loadShader("../shaders/lightShader/fragment.glsl")
 
-void main(void) {
+const PhongVertexShader = await loadShader("../shaders/phongShader/vertex.glsl")
 
-  gl_FragColor = vec4(uLightRadiance, 1.0);
-}
-`;
+const PhongFragmentShader = await loadShader("../shaders/phongShader/fragment.glsl")
 
-const PhongVertexShader = `
-attribute vec3 aVertexPosition;
-attribute vec3 aNormalPosition;
-attribute vec2 aTextureCoord;
-
-uniform mat4 uModelViewMatrix;
-uniform mat4 uProjectionMatrix;
-
-varying highp vec2 vTextureCoord;
-varying highp vec3 vFragPos;
-varying highp vec3 vNormal;
-
-
-void main(void) {
-
-  vFragPos = aVertexPosition;
-  vNormal = aNormalPosition;
-
-  gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aVertexPosition, 1.0);
-
-  vTextureCoord = aTextureCoord;
-
-}
-`;
-
-
-const PhongFragmentShader = `
-#ifdef GL_ES
-precision mediump float;
-#endif
-uniform sampler2D uSampler;
-uniform vec3 uKd;
-uniform vec3 uKs;
-uniform vec3 uLightPos;
-uniform vec3 uCameraPos;
-uniform float uLightIntensity;
-uniform int uTextureSample;
-
-varying highp vec2 vTextureCoord;
-varying highp vec3 vFragPos;
-varying highp vec3 vNormal;
-
-void main(void) {
-  vec3 color;
-  if (uTextureSample == 1) {
-    color = pow(texture2D(uSampler, vTextureCoord).rgb, vec3(2.2));
-  } else {
-    color = uKd;
-  }
-  
-  vec3 ambient = 0.05 * color;
-
-  vec3 lightDir = normalize(uLightPos - vFragPos);
-  vec3 normal = normalize(vNormal);
-  float diff = max(dot(lightDir, normal), 0.0);
-  float light_atten_coff = uLightIntensity / length(uLightPos - vFragPos);
-  vec3 diffuse =  diff * light_atten_coff * color;
-
-  vec3 viewDir = normalize(uCameraPos - vFragPos);
-  float spec = 0.0;
-  vec3 reflectDir = reflect(-lightDir, normal);
-  spec = pow (max(dot(viewDir, reflectDir), 0.0), 35.0);
-  vec3 specular = uKs * light_atten_coff * spec;  
-  
-  gl_FragColor = vec4(pow((ambient + diffuse + specular), vec3(1.0/2.2)), 1.0);
-
-}
-`;
 
 interface ShaderLocations {
   uniforms: string[],
@@ -136,15 +60,6 @@ class Material {
 }
 
 class PhongMaterial extends Material {
-
-  /**
-  * Creates an instance of PhongMaterial.
-  * @param {vec3f} color The material color
-  * @param {Texture} colorMap The texture object of the material
-  * @param {vec3f} specular The material specular coefficient
-  * @param {float} intensity The light intensity
-  * @memberof PhongMaterial
-  */
   constructor(color: number[], colorMap: string, specular: number[], intensity: number) {
     let textureSample = 0;
 
@@ -277,7 +192,7 @@ class PointLight {
   constructor(lightIntensity, lightColor) {
     this.mesh = Mesh.cube();
     this.mat = new EmissiveMaterial(lightIntensity, lightColor);
-}
+  }
 }
 
 interface RHI_Program {
@@ -610,7 +525,7 @@ function loadOBJ(renderer, path, name) {
               if (Array.isArray(child.material)) mat = child.material[0];
               else mat = child.material;
 
-              var indices = Array.from({ length: geo.attributes.position.count }, (v, k) => k);
+              var indices = Array.from({ length: geo.attributes.position.count }, (_, k) => k);
               let mesh = new Mesh(indices, { name: 'aVertexPosition', array: geo.attributes.position.array },
                 { name: 'aNormalPosition', array: geo.attributes.normal.array },
                 { name: 'aTextureCoord', array: geo.attributes.uv.array },
@@ -618,27 +533,6 @@ function loadOBJ(renderer, path, name) {
 
               let colorMap = null;
               if (mat.map != null) colorMap = new Texture(renderer.gl, mat.map.image);
-              // MARK: You can change the myMaterial object to your own Material instance
-
-              // let textureSample = 0;
-              // let myMaterial;
-              // if (colorMap != null) {
-              // 	textureSample = 1;
-              // 	myMaterial = new Material({
-              // 		'uSampler': { type: 'texture', value: colorMap },
-              // 		'uTextureSample': { type: '1i', value: textureSample },
-              // 		'uKd': { type: '3fv', value: mat.color.toArray() }
-              // 	},[],VertexShader, FragmentShader);
-              // }else{
-              // 	myMaterial = new Material({
-              // 		'uTextureSample': { type: '1i', value: textureSample },
-              // 		'uKd': { type: '3fv', value: mat.color.toArray() }
-              // 	},[],VertexShader, FragmentShader);
-              // }
-
-              // let myMaterial =new PhongMaterial(mat.color.toArray(),colorMaop,mat.specular.toArray(),
-              // renderer.lights[0].entity.mat.intensity);
-
               let myMaterial = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
                 renderer.lights[0].entity.mat.intensity);
 
@@ -752,7 +646,7 @@ function main() {
     modelScaleZ: 52,
   }
   function createGUI() {
-    const gui = new dat.gui.GUI();
+    const gui = new dat.GUI();
     const panelModel = gui.addFolder('Model properties');
     const panelModelTrans = panelModel.addFolder('Translation');
     const panelModelScale = panelModel.addFolder('Scale');
@@ -769,7 +663,7 @@ function main() {
 
   createGUI();
 
-  function mainLoop(now) {
+  function mainLoop() {
     cameraControls.update();
 
     renderer.render(guiParams);
