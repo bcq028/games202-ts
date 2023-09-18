@@ -1,6 +1,6 @@
 import { PhongVertexShader, PhongFragmentShader, LightCubeVertexShader, LightCubeFragmentShader } from './loader';
 
-interface ShaderVar {
+export interface ShaderVar {
     type: string,
     value: any
 }
@@ -27,7 +27,7 @@ export class Material {
 }
 
 export class PhongMaterial extends Material {
-    constructor(color: number[], colorMap: string, specular: number[], intensity: number) {
+    constructor(color: number[], colorMap: HTMLImageElement, specular: number[], intensity: number) {
       let textureSample = 0;
   
       if (colorMap != null) {
