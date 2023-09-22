@@ -8,11 +8,13 @@ import { Mesh, cube } from './Mesh';
 import { RenderPass, reset_gl } from './webgl';
 const cameraPosition = [-20, 180, 250];
 
+interface Renderable { mesh: Mesh, mat: Material }
+
 // Remain rotatation
 export class TRSTransform {
   translate: [number, number, number];
   scale: [number, number, number];
-  constructor(translate:[number, number, number] = [0, 0, 0], scale:[number, number, number] = [1, 1, 1]) {
+  constructor(translate: [number, number, number] = [0, 0, 0], scale: [number, number, number] = [1, 1, 1]) {
     this.translate = translate;
     this.scale = scale;
   }
@@ -53,10 +55,8 @@ function loadOBJ(renderPipeline: RenderPipeline, path: string, name: string, gl:
               let colorMap: HTMLImageElement = null;
               if (mat.map != null) colorMap = mat.map.image
               let myMaterial = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
-                renderPipeline.lights[0].entity.mat.intensity);
-
-              let meshRender = new RenderPass(gl, mesh, myMaterial);
-              renderPipeline.addMeshRenderer(meshRender);
+                (renderPipeline.lights[0].mat as EmissiveMaterial).intensity);
+              renderPipeline.addRenderable({ mesh, mat: myMaterial });
             }
           });
         }, null, onError);
@@ -73,13 +73,14 @@ interface GUIParams {
   modelScaleZ: number;
 }
 
+
 class RenderPipeline {
-  meshes: RenderPass[] = [];
-  lights = [];
+  renderableNodes: Renderable[] = [];
+  lights: Renderable[] = [];
 
-  addLight(light: { mesh: Mesh, mat: Material }, gl: WebGLRenderingContext) { this.lights.push({ entity: light, meshRender: new RenderPass(gl, light.mesh, light.mat) }); }
+  addLight(light: Renderable) { this.lights.push(light); }
 
-  addMeshRenderer(meshRenderer: RenderPass) { this.meshes.push(meshRenderer); }
+  addRenderable(node: Renderable) { this.renderableNodes.push(node); }
 
   render(guiParams: GUIParams, gl: WebGLRenderingContext, camera: THREE.Camera) {
 
@@ -89,28 +90,29 @@ class RenderPipeline {
     const timer = Date.now() * 0.00025;
     let lightPos = [Math.sin(timer * 6) * 100,
     Math.cos(timer * 4) * 150,
-    Math.cos(timer * 2) * 100] as [number,number,number];
+    Math.cos(timer * 2) * 100] as [number, number, number];
 
     if (this.lights.length != 0) {
       for (let l = 0; l < this.lights.length; l++) {
         let trans = new TRSTransform(lightPos);
-        this.lights[l].meshRender.draw(camera, trans);
+        const meshRender = new RenderPass(gl, this.lights[l].mesh, this.lights[l].mat);
+        meshRender.draw(camera, trans);
 
-        for (let i = 0; i < this.meshes.length; i++) {
-          const mesh = this.meshes[i];
+        for (let i = 0; i < this.renderableNodes.length; i++) {
+          const mesh = this.renderableNodes[i];
 
-          const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number,number,number];
-          const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number,number,number];
+          const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number, number, number];
+          const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number, number, number];
           let meshTrans = new TRSTransform(modelTranslation, modelScale);
-          mesh.draw(camera, meshTrans, lightPos);
+          new RenderPass(gl, mesh.mesh, mesh.mat).draw(camera, meshTrans, lightPos)
         }
       }
     } else {
       // Handle mesh(no light)
-      for (let i = 0; i < this.meshes.length; i++) {
-        const mesh = this.meshes[i];
+      for (let i = 0; i < this.renderableNodes.length; i++) {
+        const mesh = this.renderableNodes[i];
         let trans = new TRSTransform();
-        mesh.draw(camera, trans);
+        new RenderPass(gl, mesh.mesh, mesh.mat).draw(camera, trans)
       }
     }
   }
@@ -152,7 +154,7 @@ function main() {
   };
 
   const renderPipeline = new RenderPipeline();
-  renderPipeline.addLight(pointLight, gl);
+  renderPipeline.addLight(pointLight);
   loadOBJ(renderPipeline, 'assets/mary/', 'Marry', gl);
 
   const guiParams = {

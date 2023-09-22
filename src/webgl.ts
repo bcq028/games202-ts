@@ -280,7 +280,7 @@ export class RenderPass {
     }
 }
 
-function isPowerOf2(value) {
+function isPowerOf2(value:number) {
     return (value & (value - 1)) == 0;
 }
 
