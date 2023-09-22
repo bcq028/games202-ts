@@ -5,11 +5,11 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import * as dat from 'dat.gui';
 import { PhongMaterial, EmissiveMaterial, Material } from './Material';
 import { Mesh, cube } from './Mesh';
-import { MeshRenderer, reset_gl } from './webgl';
+import { RenderPass, reset_gl } from './webgl';
 const cameraPosition = [-20, 180, 250];
 
 // Remain rotatation
-class TRSTransform {
+export class TRSTransform {
   translate: number[];
   scale: number[];
   constructor(translate = [0, 0, 0], scale = [1, 1, 1]) {
@@ -55,7 +55,7 @@ function loadOBJ(renderPipeline: RenderPipeline, path: string, name: string, gl:
               let myMaterial = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
                 renderPipeline.lights[0].entity.mat.intensity);
 
-              let meshRender = new MeshRenderer(gl, mesh, myMaterial);
+              let meshRender = new RenderPass(gl, mesh, myMaterial);
               renderPipeline.addMeshRenderer(meshRender);
             }
           });
@@ -74,12 +74,12 @@ interface GUIParams {
 }
 
 class RenderPipeline {
-  meshes: MeshRenderer[] = [];
+  meshes: RenderPass[] = [];
   lights = [];
 
-  addLight(light: { mesh: Mesh, mat: Material }, gl: WebGLRenderingContext) { this.lights.push({ entity: light, meshRender: new MeshRenderer(gl, light.mesh, light.mat) }); }
+  addLight(light: { mesh: Mesh, mat: Material }, gl: WebGLRenderingContext) { this.lights.push({ entity: light, meshRender: new RenderPass(gl, light.mesh, light.mat) }); }
 
-  addMeshRenderer(meshRenderer: MeshRenderer) { this.meshes.push(meshRenderer); }
+  addMeshRenderer(meshRenderer: RenderPass) { this.meshes.push(meshRenderer); }
 
   render(guiParams: GUIParams, gl: WebGLRenderingContext, camera: THREE.Camera) {
 
