@@ -10,9 +10,9 @@ const cameraPosition = [-20, 180, 250];
 
 // Remain rotatation
 export class TRSTransform {
-  translate: number[];
-  scale: number[];
-  constructor(translate = [0, 0, 0], scale = [1, 1, 1]) {
+  translate: [number, number, number];
+  scale: [number, number, number];
+  constructor(translate:[number, number, number] = [0, 0, 0], scale:[number, number, number] = [1, 1, 1]) {
     this.translate = translate;
     this.scale = scale;
   }
@@ -89,7 +89,7 @@ class RenderPipeline {
     const timer = Date.now() * 0.00025;
     let lightPos = [Math.sin(timer * 6) * 100,
     Math.cos(timer * 4) * 150,
-    Math.cos(timer * 2) * 100];
+    Math.cos(timer * 2) * 100] as [number,number,number];
 
     if (this.lights.length != 0) {
       for (let l = 0; l < this.lights.length; l++) {
@@ -99,8 +99,8 @@ class RenderPipeline {
         for (let i = 0; i < this.meshes.length; i++) {
           const mesh = this.meshes[i];
 
-          const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ];
-          const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ];
+          const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number,number,number];
+          const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number,number,number];
           let meshTrans = new TRSTransform(modelTranslation, modelScale);
           mesh.draw(camera, meshTrans, lightPos);
         }

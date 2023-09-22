@@ -1,6 +1,7 @@
 import { mat4 } from "gl-matrix"
 import { Mesh } from "./Mesh"
 import { Material } from "./Material"
+import { TRSTransform } from "./main"
 
 export interface RHI_Program {
     glShaderProgram: WebGLProgram,
@@ -148,7 +149,7 @@ export class RenderPass {
 
     }
 
-    draw(camera: THREE.Camera, transform, lightPos?: number[]) {
+    draw(camera: THREE.Camera, transform: TRSTransform, lightPos?: number[]) {
         const gl = this.gl;
         if (lightPos) {
             this.gl.useProgram(this.program.glShaderProgram);
