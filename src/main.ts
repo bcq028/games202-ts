@@ -1,122 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import * as dat from 'dat.gui';
-import { PhongMaterial, EmissiveMaterial, Material } from './Material';
-import { Mesh, cube } from './Mesh';
-import { RenderPass, reset_gl } from './webgl';
+import { EmissiveMaterial } from './Material';
+import {  cube } from './Geometry';
+import { Scene } from './Scene';
+import { RenderPipeline } from './RenderPipeline';
+import { loadOBJ } from './loader';
 const cameraPosition = [-20, 180, 250];
 
-interface Renderable { mesh: Mesh, mat: Material }
-
-// Remain rotatation
-export class TRSTransform {
-  translate: [number, number, number];
-  scale: [number, number, number];
-  constructor(translate: [number, number, number] = [0, 0, 0], scale: [number, number, number] = [1, 1, 1]) {
-    this.translate = translate;
-    this.scale = scale;
-  }
-}
-
-
-
-function loadOBJ(renderPipeline: RenderPipeline, path: string, name: string, gl: WebGLRenderingContext) {
-
-  const manager = new THREE.LoadingManager();
-  manager.onProgress = function (item, loaded, total) {
-    console.log(item, loaded, total);
-  };
-
-  function onError() { }
-
-  new MTLLoader(manager)
-    .setPath(path)
-    .load(name + '.mtl', function (materials) {
-      materials.preload();
-      new OBJLoader(manager)
-        .setMaterials(materials)
-        .setPath(path)
-        .load(name + '.obj', function (object) {
-          object.traverse(function (child: any) {
-            if (child.isMesh) {
-              let geo = child.geometry;
-              let mat;
-              if (Array.isArray(child.material)) mat = child.material[0];
-              else mat = child.material;
-
-              var indices = Array.from({ length: geo.attributes.position.count }, (_, k) => k);
-              let mesh = new Mesh(indices, { name: 'aVertexPosition', array: geo.attributes.position.array },
-                { name: 'aNormalPosition', array: geo.attributes.normal.array },
-                { name: 'aTextureCoord', array: geo.attributes.uv.array },
-              );
-
-              let colorMap: HTMLImageElement = null;
-              if (mat.map != null) colorMap = mat.map.image
-              let myMaterial = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
-                (renderPipeline.lights[0].mat as EmissiveMaterial).intensity);
-              renderPipeline.addRenderable({ mesh, mat: myMaterial });
-            }
-          });
-        }, null, onError);
-    });
-}
-
-
-interface GUIParams {
-  modelTransX: number;
-  modelTransY: number;
-  modelTransZ: number;
-  modelScaleX: number;
-  modelScaleY: number;
-  modelScaleZ: number;
-}
-
-
-class RenderPipeline {
-  renderableNodes: Renderable[] = [];
-  lights: Renderable[] = [];
-
-  addLight(light: Renderable) { this.lights.push(light); }
-
-  addRenderable(node: Renderable) { this.renderableNodes.push(node); }
-
-  render(guiParams: GUIParams, gl: WebGLRenderingContext, camera: THREE.Camera) {
-
-    reset_gl(gl)
-
-    // Handle light
-    const timer = Date.now() * 0.00025;
-    let lightPos = [Math.sin(timer * 6) * 100,
-    Math.cos(timer * 4) * 150,
-    Math.cos(timer * 2) * 100] as [number, number, number];
-
-    if (this.lights.length != 0) {
-      for (let l = 0; l < this.lights.length; l++) {
-        let trans = new TRSTransform(lightPos);
-        const meshRender = new RenderPass(gl, this.lights[l].mesh, this.lights[l].mat);
-        meshRender.draw(camera, trans);
-
-        for (let i = 0; i < this.renderableNodes.length; i++) {
-          const mesh = this.renderableNodes[i];
-
-          const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number, number, number];
-          const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number, number, number];
-          let meshTrans = new TRSTransform(modelTranslation, modelScale);
-          new RenderPass(gl, mesh.mesh, mesh.mat).draw(camera, meshTrans, lightPos)
-        }
-      }
-    } else {
-      // Handle mesh(no light)
-      for (let i = 0; i < this.renderableNodes.length; i++) {
-        const mesh = this.renderableNodes[i];
-        let trans = new TRSTransform();
-        new RenderPass(gl, mesh.mesh, mesh.mat).draw(camera, trans)
-      }
-    }
-  }
-}
 
 function main() {
   const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
@@ -149,13 +40,15 @@ function main() {
 
 
   const pointLight = {
-    mesh: cube(),
-    mat: new EmissiveMaterial(250, [1, 1, 1])
+    geometry: cube(),
+    material: new EmissiveMaterial(250, [1, 1, 1])
   };
-
-  const renderPipeline = new RenderPipeline();
-  renderPipeline.addLight(pointLight);
-  loadOBJ(renderPipeline, 'assets/mary/', 'Marry', gl);
+  const scene = new Scene();
+  scene.camera = camera;
+  scene.addLight(pointLight);
+  loadOBJ(scene, 'assets/mary/', 'Marry');
+  
+  const renderPipeline = new RenderPipeline()
 
   const guiParams = {
     modelTransX: 0,
@@ -186,7 +79,7 @@ function main() {
   function mainLoop() {
     cameraControls.update();
 
-    renderPipeline.render(guiParams, gl, camera);
+    renderPipeline.render(guiParams, gl, scene);
     requestAnimationFrame(mainLoop);
   }
   requestAnimationFrame(mainLoop);

@@ -1,7 +1,7 @@
 import { mat4 } from "gl-matrix"
-import { Mesh } from "./Mesh"
+import { Geometry } from "./Geometry"
 import { Material } from "./Material"
-import { TRSTransform } from "./main"
+import { TRSTransform } from "./RenderPipeline"
 
 export interface RHI_Program {
     glShaderProgram: WebGLProgram,
@@ -99,11 +99,11 @@ export class RenderPass {
     private texcoordBuffer: WebGLBuffer;
     private indicesBuffer: WebGLBuffer;
     gl: WebGLRenderingContext;
-    mesh: Mesh;
+    mesh: Geometry;
     material: Material;
     program: RHI_Program;
 
-    constructor(gl: WebGLRenderingContext, mesh: Mesh, material: Material) {
+    constructor(gl: WebGLRenderingContext, mesh: Geometry, material: Material) {
         this.gl = gl;
         this.mesh = mesh;
         this.material = material;
@@ -167,6 +167,7 @@ export class RenderPass {
         ]);
         mat4.translate(modelViewMatrix, modelViewMatrix, transform.translate);
         mat4.scale(modelViewMatrix, modelViewMatrix, transform.scale);
+        
         mat4.copy(projectionMatrix, camera.projectionMatrix.elements as unknown as [
             number, number, number, number,
             number, number, number, number,
