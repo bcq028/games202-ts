@@ -15,7 +15,7 @@ function main() {
     material: new EmissiveMaterial(250, [1, 1, 1])
   };
 
-  const scene = new Scene(canvas);
+  const scene = new Scene(canvas,gl);
   scene.addLight(pointLight);
   loadOBJ(scene, 'assets/mary/', 'Marry');
 

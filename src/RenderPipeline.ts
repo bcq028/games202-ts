@@ -1,6 +1,6 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { reset_gl} from "./RenderPass";
+import { reset_gl } from "./RenderPass";
 import { RenderPass } from "./RenderPass"
 
 interface GUIParams {
@@ -31,7 +31,7 @@ export class RenderPipeline {
         modelScaleZ: 52,
     }
 
-    constructor(){
+    constructor() {
         this.createGUI();
     }
 
@@ -60,27 +60,18 @@ export class RenderPipeline {
         Math.cos(timer * 4) * 150,
         Math.cos(timer * 2) * 100] as [number, number, number];
 
-        if (scene.lights.length != 0) {
-            for (let l = 0; l < scene.lights.length; l++) {
-                let trans = new TRSTransform(lightPos);
-                const meshRender = new RenderPass(gl, scene.lights[l].mesh, scene.lights[l].material);
-                meshRender.draw(scene.camera, trans);
+        for (let l = 0; l < scene.lights.length; l++) {
+            let trans = new TRSTransform(lightPos);
+            const meshRender = new RenderPass(gl, scene.lights[l].mesh, scene.lights[l].material);
+            meshRender.draw(scene.camera, trans);
 
-                for (let i = 0; i < scene.meshes.length; i++) {
-                    const mesh = scene.meshes[i];
-
-                    const modelTranslation = [this.guiParams.modelTransX, this.guiParams.modelTransY, this.guiParams.modelTransZ] as [number, number, number];
-                    const modelScale = [this.guiParams.modelScaleX, this.guiParams.modelScaleY, this.guiParams.modelScaleZ] as [number, number, number];
-                    let meshTrans = new TRSTransform(modelTranslation, modelScale);
-                    new RenderPass(gl, mesh.mesh, mesh.material).draw(scene.camera, meshTrans, lightPos)
-                }
-            }
-        } else {
-            // Handle mesh(no light)
             for (let i = 0; i < scene.meshes.length; i++) {
                 const mesh = scene.meshes[i];
-                let trans = new TRSTransform();
-                new RenderPass(gl, mesh.mesh, mesh.material).draw(scene.camera, trans)
+
+                const modelTranslation = [this.guiParams.modelTransX, this.guiParams.modelTransY, this.guiParams.modelTransZ] as [number, number, number];
+                const modelScale = [this.guiParams.modelScaleX, this.guiParams.modelScaleY, this.guiParams.modelScaleZ] as [number, number, number];
+                let meshTrans = new TRSTransform(modelTranslation, modelScale);
+                new RenderPass(gl, mesh.mesh, mesh.material).draw(scene.camera, meshTrans, lightPos)
             }
         }
     }

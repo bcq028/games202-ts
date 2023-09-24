@@ -52,7 +52,7 @@ export function loadOBJ(scene: Scene, path: string, name: string) {
               if (mat.map != null) colorMap = mat.map.image
               let material = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
                 (scene.lights[0].material as EmissiveMaterial).intensity);
-              scene.addMesh({ mesh: geometry, material: material });
+              scene.addEntity({ mesh: geometry, material: material });
             }
           });
         }, null, onError);

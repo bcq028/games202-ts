@@ -1,21 +1,30 @@
 import * as THREE from 'three'
 import { Entity } from "./Entity";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { RHIMaterial, RHIMesh, createWebGLMaterial, createWebGLMesh } from './RHIData';
 
 const cameraPosition = [-20, 180, 250];
 
 export class Scene {
     public meshes: Entity[] = []
     public lights: Entity[] = []
+    public rhi_meshes:RHIMesh[]=[]
+    public rhi_materials:RHIMaterial[]=[]
     public camera: THREE.Camera
     public cameraControls:OrbitControls
-    constructor(canvas:HTMLCanvasElement) {
+    private gl:WebGLRenderingContext
+    constructor(canvas:HTMLCanvasElement,gl: WebGLRenderingContext) {
+        this.gl=gl
         const { camera, cameraControls } = this.camera_init(canvas)
         this.camera = camera;
         this.cameraControls=cameraControls
     }
-    public addMesh(mesh: Entity) {
-        this.meshes.push(mesh)
+
+
+    public addEntity(entity: Entity) {
+        this.meshes.push(entity)
+        this.rhi_meshes.push(createWebGLMesh(this.gl,entity.mesh))
+        this.rhi_materials.push(createWebGLMaterial(this.gl,entity.material))
     }
     public addLight(light: Entity) {
         this.lights.push(light)
