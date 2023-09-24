@@ -1,6 +1,7 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { reset_gl, RenderPass } from "./webgl";
+import { reset_gl} from "./RenderPass";
+import { RenderPass } from "./RenderPass"
 
 interface GUIParams {
     modelTransX: number;
