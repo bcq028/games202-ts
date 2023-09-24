@@ -1,3 +1,4 @@
+import dat from "dat.gui";
 import { Scene } from "./Scene";
 import { reset_gl, RenderPass } from "./webgl";
 
@@ -20,8 +21,35 @@ export class TRSTransform {
 
 
 export class RenderPipeline {
+    public guiParams: GUIParams = {
+        modelTransX: 0,
+        modelTransY: 0,
+        modelTransZ: 0,
+        modelScaleX: 52,
+        modelScaleY: 52,
+        modelScaleZ: 52,
+    }
 
-    render(guiParams: GUIParams, gl: WebGLRenderingContext, scene: Scene) {
+    constructor(){
+        this.createGUI();
+    }
+
+    createGUI() {
+        const gui = new dat.GUI();
+        const panelModel = gui.addFolder('Model properties');
+        const panelModelTrans = panelModel.addFolder('Translation');
+        const panelModelScale = panelModel.addFolder('Scale');
+        panelModelTrans.add(this.guiParams, 'modelTransX').name('X');
+        panelModelTrans.add(this.guiParams, 'modelTransY').name('Y');
+        panelModelTrans.add(this.guiParams, 'modelTransZ').name('Z');
+        panelModelScale.add(this.guiParams, 'modelScaleX').name('X');
+        panelModelScale.add(this.guiParams, 'modelScaleY').name('Y');
+        panelModelScale.add(this.guiParams, 'modelScaleZ').name('Z');
+        panelModel.open();
+        panelModelTrans.open();
+        panelModelScale.open();
+    }
+    render(gl: WebGLRenderingContext, scene: Scene) {
 
         reset_gl(gl)
 
@@ -40,8 +68,8 @@ export class RenderPipeline {
                 for (let i = 0; i < scene.meshes.length; i++) {
                     const mesh = scene.meshes[i];
 
-                    const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number, number, number];
-                    const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number, number, number];
+                    const modelTranslation = [this.guiParams.modelTransX, this.guiParams.modelTransY, this.guiParams.modelTransZ] as [number, number, number];
+                    const modelScale = [this.guiParams.modelScaleX, this.guiParams.modelScaleY, this.guiParams.modelScaleZ] as [number, number, number];
                     let meshTrans = new TRSTransform(modelTranslation, modelScale);
                     new RenderPass(gl, mesh.geometry, mesh.material).draw(scene.camera, meshTrans, lightPos)
                 }

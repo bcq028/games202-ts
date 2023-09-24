@@ -3,7 +3,7 @@ import { Geometry } from "./Geometry"
 import { Material } from "./Material"
 import { TRSTransform } from "./RenderPipeline"
 
-export interface RHI_Program {
+export interface WebGLContext {
     glShaderProgram: WebGLProgram,
     uniforms?: {
         [key: string]: WebGLUniformLocation
@@ -24,18 +24,10 @@ export function reset_gl(gl: WebGLRenderingContext) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
-export function compile(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, uniform_keys: string[], attibute_keys: string[]) {
-    return get_rhi_program(gl, vsSrc, fsSrc, {
-        uniforms: uniform_keys,
-        attribs: attibute_keys
-    })
-}
-
-
 export function get_rhi_program(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, shaderLocations: {
     uniforms: string[],
     attribs: string[]
-}): RHI_Program {
+}): WebGLContext {
     function compileShader(shaderSource: string, shaderType: number) {
         const shader = gl.createShader(shaderType)!;
         gl.shaderSource(shader, shaderSource);
@@ -62,7 +54,7 @@ export function get_rhi_program(gl: WebGLRenderingContext, vsSrc: string, fsSrc:
      * get location of shader parameter and bind them to uniform/attribute keys
      * we can refer to the location to set variable 
      */
-    function addShaderLocations(result: RHI_Program, shaderLocations: {
+    function addShaderLocations(result: WebGLContext, shaderLocations: {
         uniforms: string[],
         attribs: string[]
     }) {
@@ -101,7 +93,7 @@ export class RenderPass {
     gl: WebGLRenderingContext;
     mesh: Geometry;
     material: Material;
-    program: RHI_Program;
+    program: WebGLContext;
 
     constructor(gl: WebGLRenderingContext, mesh: Geometry, material: Material) {
         this.gl = gl;
@@ -127,7 +119,7 @@ export class RenderPass {
         }
 
         this.material.setMeshAttribs(extraAttribs);
-        this.program = compile(gl, this.material.vsSrc, this.material.fsSrc, this.material.uniform_keys, this.material.attibute_keys)
+        this.program = get_rhi_program(gl, this.material.vsSrc, this.material.fsSrc, { uniforms: this.material.uniform_keys, attribs: this.material.attibute_keys })
 
         if (mesh.hasVertices) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -167,7 +159,7 @@ export class RenderPass {
         ]);
         mat4.translate(modelViewMatrix, modelViewMatrix, transform.translate);
         mat4.scale(modelViewMatrix, modelViewMatrix, transform.scale);
-        
+
         mat4.copy(projectionMatrix, camera.projectionMatrix.elements as unknown as [
             number, number, number, number,
             number, number, number, number,
@@ -281,7 +273,7 @@ export class RenderPass {
     }
 }
 
-function isPowerOf2(value:number) {
+function isPowerOf2(value: number) {
     return (value & (value - 1)) == 0;
 }
 
