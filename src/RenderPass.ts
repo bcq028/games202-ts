@@ -3,6 +3,16 @@ import { Mesh } from "./Mesh"
 import { Material } from "./Material"
 import { TRSTransform } from "./RenderPipeline"
 import { createTexture } from "./RHIData"
+import { Scene } from "./Scene"
+
+interface GUIParams {
+    modelTransX: number;
+    modelTransY: number;
+    modelTransZ: number;
+    modelScaleX: number;
+    modelScaleY: number;
+    modelScaleZ: number;
+}
 
 export interface WebGLContext {
     glShaderProgram: WebGLProgram,
@@ -275,3 +285,148 @@ export class RenderPass {
 }
 
 
+export class CameraRenderPass {
+    constructor(private gl: WebGLRenderingContext, private program: WebGLContext) {
+
+    }
+    draw(scene: Scene, lightPos: number[], guiParams: GUIParams) {
+        const gl = this.gl;
+        if (lightPos) {
+            this.gl.useProgram(this.program.glShaderProgram);
+            this.gl.uniform3fv(this.program.uniforms.uLightPos, lightPos);
+        }
+        let modelViewMatrix = mat4.create();
+        let projectionMatrix = mat4.create();
+
+        scene.camera.updateMatrixWorld();
+
+
+        for (let i = 0; i < scene.rhiEntities.length; i++) {
+            const entity = scene.rhiEntities[i];
+
+            const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number, number, number];
+            const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number, number, number];
+            let transform = new TRSTransform(modelTranslation, modelScale);
+            mat4.invert(modelViewMatrix, scene.camera.matrixWorld.elements as unknown as [
+                number, number, number, number,
+                number, number, number, number,
+                number, number, number, number,
+                number, number, number, number
+            ]);
+            mat4.translate(modelViewMatrix, modelViewMatrix, transform.translate);
+            mat4.scale(modelViewMatrix, modelViewMatrix, transform.scale);
+
+            mat4.copy(projectionMatrix, scene.camera.projectionMatrix.elements as unknown as [
+                number, number, number, number,
+                number, number, number, number,
+                number, number, number, number,
+                number, number, number, number
+            ]);
+            if (entity.mesh.vertexBuffer) {
+                const numComponents = 3;
+                const type = gl.FLOAT;
+                const normalize = false;
+                const stride = 0;
+                const offset = 0;
+                gl.bindBuffer(gl.ARRAY_BUFFER, entity.mesh.vertexBuffer);
+                gl.vertexAttribPointer(
+                    this.program.attribs[scene.entities[i].mesh.verticesName],
+                    numComponents,
+                    type,
+                    normalize,
+                    stride,
+                    offset);
+                gl.enableVertexAttribArray(
+                    this.program.attribs[scene.entities[i].mesh.verticesName]);
+            }
+
+
+            if (entity.mesh.normalBuffer) {
+                const numComponents = 3;
+                const type = gl.FLOAT;
+                const normalize = false;
+                const stride = 0;
+                const offset = 0;
+                gl.bindBuffer(gl.ARRAY_BUFFER, entity.mesh.normalBuffer);
+                gl.vertexAttribPointer(
+                    this.program.attribs[scene.entities[i].mesh.normalsName],
+                    numComponents,
+                    type,
+                    normalize,
+                    stride,
+                    offset);
+                gl.enableVertexAttribArray(
+                    this.program.attribs[scene.entities[i].mesh.normalsName]);
+            }
+
+            if (entity.mesh.texcoordBuffer) {
+                const numComponents = 2;
+                const type = gl.FLOAT;
+                const normalize = false;
+                const stride = 0;
+                const offset = 0;
+                gl.bindBuffer(gl.ARRAY_BUFFER, entity.mesh.normalBuffer);
+                gl.vertexAttribPointer(
+                    this.program.attribs[scene.entities[i].mesh.texcoordsName],
+                    numComponents,
+                    type,
+                    normalize,
+                    stride,
+                    offset);
+                gl.enableVertexAttribArray(
+                    this.program.attribs[scene.entities[i].mesh.texcoordsName]);
+            }
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, entity.mesh.indicesBuffer);
+
+            gl.useProgram(this.program.glShaderProgram);
+
+            gl.uniformMatrix4fv(
+                this.program.uniforms.uProjectionMatrix,
+                false,
+                projectionMatrix);
+            gl.uniformMatrix4fv(
+                this.program.uniforms.uModelViewMatrix,
+                false,
+                modelViewMatrix);
+
+            // Specific the camera uniforms
+            gl.uniform3fv(
+                this.program.uniforms.uCameraPos,
+                [scene.camera.position.x, scene.camera.position.y, scene.camera.position.z]);
+
+            for (let k in scene.entities[i].material.uniforms) {
+                if (scene.entities[i].material.uniforms[k].type == 'matrix4fv') {
+                    gl.uniformMatrix4fv(
+                        this.program.uniforms[k],
+                        false,
+                        scene.entities[i].material.uniforms[k].value);
+                } else if (scene.entities[i].material.uniforms[k].type == '3fv') {
+                    gl.uniform3fv(
+                        this.program.uniforms[k],
+                        scene.entities[i].material.uniforms[k].value);
+                } else if (scene.entities[i].material.uniforms[k].type == '1f') {
+                    gl.uniform1f(
+                        this.program.uniforms[k],
+                        scene.entities[i].material.uniforms[k].value);
+                } else if (scene.entities[i].material.uniforms[k].type == '1i') {
+                    gl.uniform1i(
+                        this.program.uniforms[k],
+                        scene.entities[i].material.uniforms[k].value);
+                } else if (scene.entities[i].material.uniforms[k].type == 'texture') {
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, entity.material.textures[0]);
+                    gl.uniform1i(this.program.uniforms[k], 0);
+                }
+            }
+
+            {
+                const vertexCount = scene.entities[i].mesh.count;
+                const type = gl.UNSIGNED_SHORT;
+                const offset = 0;
+                gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+            }
+        }
+
+    }
+}

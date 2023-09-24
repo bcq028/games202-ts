@@ -1,6 +1,6 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { reset_gl } from "./RenderPass";
+import { CameraRenderPass, reset_gl } from "./RenderPass";
 import { RenderPass } from "./RenderPass"
 
 interface GUIParams {
@@ -65,8 +65,8 @@ export class RenderPipeline {
             const meshRender = new RenderPass(gl, scene.lights[l].mesh, scene.lights[l].material);
             meshRender.draw(scene.camera, trans);
 
-            for (let i = 0; i < scene.meshes.length; i++) {
-                const mesh = scene.meshes[i];
+            for (let i = 0; i < scene.entities.length; i++) {
+                const mesh = scene.entities[i];
 
                 const modelTranslation = [this.guiParams.modelTransX, this.guiParams.modelTransY, this.guiParams.modelTransZ] as [number, number, number];
                 const modelScale = [this.guiParams.modelScaleX, this.guiParams.modelScaleY, this.guiParams.modelScaleZ] as [number, number, number];

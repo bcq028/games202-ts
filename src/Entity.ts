@@ -4,8 +4,8 @@ import { Mesh } from "./Mesh";
 export class Entity {
     public mesh: Mesh
     public material: Material
-    constructor(geometry: Mesh, material: Material) {
-        this.mesh = geometry
+    constructor(mesh: Mesh, material: Material) {
+        this.mesh = mesh
         this.material = material
     }
 }

@@ -2,9 +2,9 @@ import { Material } from "./Material";
 import { Mesh } from "./Mesh";
 
 export interface RHIMesh {
-    vertexBuffer: WebGLBuffer
-    normalBuffer: WebGLBuffer
-    texcoordBuffer: WebGLBuffer
+    vertexBuffer?: WebGLBuffer
+    normalBuffer?: WebGLBuffer
+    texcoordBuffer?: WebGLBuffer
     indicesBuffer: WebGLBuffer
 }
 
@@ -12,26 +12,30 @@ export interface RHIMaterial {
     textures: WebGLTexture[]
 }
 
+export interface RHIEntity {
+    mesh: RHIMesh
+    material: RHIMaterial
+}
 
 export function createWebGLMesh(gl: WebGLRenderingContext, mesh: Mesh) {
     let ret: RHIMesh = {
-        vertexBuffer: gl.createBuffer(),
-        normalBuffer: gl.createBuffer(),
-        texcoordBuffer: gl.createBuffer(),
-        indicesBuffer: gl.createBuffer()
+        indicesBuffer:gl.createBuffer()
     }
 
     if (mesh.hasVertices) {
+        ret.vertexBuffer=gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, ret.vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
     }
 
     if (mesh.hasNormals) {
+        ret.normalBuffer=gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, ret.normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, mesh.normals, gl.STATIC_DRAW);
     }
 
     if (mesh.hasTexcoords) {
+        ret.texcoordBuffer=gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, ret.texcoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, mesh.texcoords, gl.STATIC_DRAW);
     }
