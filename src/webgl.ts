@@ -1,5 +1,5 @@
 import { mat4 } from "gl-matrix"
-import { Geometry } from "./Geometry"
+import { Mesh } from "./Mesh"
 import { Material } from "./Material"
 import { TRSTransform } from "./RenderPipeline"
 
@@ -91,11 +91,11 @@ export class RenderPass {
     private texcoordBuffer: WebGLBuffer;
     private indicesBuffer: WebGLBuffer;
     gl: WebGLRenderingContext;
-    mesh: Geometry;
+    mesh: Mesh;
     material: Material;
     program: WebGLContext;
 
-    constructor(gl: WebGLRenderingContext, mesh: Geometry, material: Material) {
+    constructor(gl: WebGLRenderingContext, mesh: Mesh, material: Material) {
         this.gl = gl;
         this.mesh = mesh;
         this.material = material;

@@ -62,7 +62,7 @@ export class RenderPipeline {
         if (scene.lights.length != 0) {
             for (let l = 0; l < scene.lights.length; l++) {
                 let trans = new TRSTransform(lightPos);
-                const meshRender = new RenderPass(gl, scene.lights[l].geometry, scene.lights[l].material);
+                const meshRender = new RenderPass(gl, scene.lights[l].mesh, scene.lights[l].material);
                 meshRender.draw(scene.camera, trans);
 
                 for (let i = 0; i < scene.meshes.length; i++) {
@@ -71,7 +71,7 @@ export class RenderPipeline {
                     const modelTranslation = [this.guiParams.modelTransX, this.guiParams.modelTransY, this.guiParams.modelTransZ] as [number, number, number];
                     const modelScale = [this.guiParams.modelScaleX, this.guiParams.modelScaleY, this.guiParams.modelScaleZ] as [number, number, number];
                     let meshTrans = new TRSTransform(modelTranslation, modelScale);
-                    new RenderPass(gl, mesh.geometry, mesh.material).draw(scene.camera, meshTrans, lightPos)
+                    new RenderPass(gl, mesh.mesh, mesh.material).draw(scene.camera, meshTrans, lightPos)
                 }
             }
         } else {
@@ -79,7 +79,7 @@ export class RenderPipeline {
             for (let i = 0; i < scene.meshes.length; i++) {
                 const mesh = scene.meshes[i];
                 let trans = new TRSTransform();
-                new RenderPass(gl, mesh.geometry, mesh.material).draw(scene.camera, trans)
+                new RenderPass(gl, mesh.mesh, mesh.material).draw(scene.camera, trans)
             }
         }
     }

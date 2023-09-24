@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import { Mesh } from "./Mesh";
+import { Entity } from "./Entity";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 const cameraPosition = [-20, 180, 250];
 
 export class Scene {
-    public meshes: Mesh[] = []
-    public lights: Mesh[] = []
+    public meshes: Entity[] = []
+    public lights: Entity[] = []
     public camera: THREE.Camera
     public cameraControls:OrbitControls
     constructor(canvas:HTMLCanvasElement) {
@@ -14,10 +14,10 @@ export class Scene {
         this.camera = camera;
         this.cameraControls=cameraControls
     }
-    public addMesh(mesh: Mesh) {
+    public addMesh(mesh: Entity) {
         this.meshes.push(mesh)
     }
-    public addLight(light: Mesh) {
+    public addLight(light: Entity) {
         this.lights.push(light)
     }
 

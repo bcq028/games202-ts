@@ -1,5 +1,5 @@
 import { EmissiveMaterial } from './Material';
-import { cube } from './Geometry';
+import { cube } from './Mesh';
 import { Scene } from './Scene';
 import { RenderPipeline } from './RenderPipeline';
 import { loadOBJ } from './loader';
@@ -11,7 +11,7 @@ function main() {
   canvas.height = window.screen.height;
   const gl = canvas.getContext('webgl')!;
   const pointLight = {
-    geometry: cube(),
+    mesh: cube(),
     material: new EmissiveMaterial(250, [1, 1, 1])
   };
 
