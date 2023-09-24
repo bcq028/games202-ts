@@ -14,7 +14,7 @@ interface GUIParams {
     modelScaleZ: number;
 }
 
-export interface WebGLContext {
+export interface ShaderContext {
     glShaderProgram: WebGLProgram,
     uniforms?: {
         [key: string]: WebGLUniformLocation
@@ -35,10 +35,10 @@ export function reset_gl(gl: WebGLRenderingContext) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
-export function get_rhi_program(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, shaderLocations: {
+export function getShaderContext(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, shaderLocations: {
     uniforms: string[],
     attribs: string[]
-}): WebGLContext {
+}): ShaderContext {
     function compileShader(shaderSource: string, shaderType: number) {
         const shader = gl.createShader(shaderType)!;
         gl.shaderSource(shader, shaderSource);
@@ -65,7 +65,7 @@ export function get_rhi_program(gl: WebGLRenderingContext, vsSrc: string, fsSrc:
      * get location of shader parameter and bind them to uniform/attribute keys
      * we can refer to the location to set variable 
      */
-    function addShaderLocations(result: WebGLContext, shaderLocations: {
+    function addShaderLocations(result: ShaderContext, shaderLocations: {
         uniforms: string[],
         attribs: string[]
     }) {
@@ -104,7 +104,7 @@ export class RenderPass {
     gl: WebGLRenderingContext;
     mesh: Mesh;
     material: Material;
-    program: WebGLContext;
+    shaderContext: ShaderContext;
 
     constructor(gl: WebGLRenderingContext, mesh: Mesh, material: Material) {
         this.gl = gl;
@@ -130,7 +130,7 @@ export class RenderPass {
         }
 
         this.material.setMeshAttribs(extraAttribs);
-        this.program = get_rhi_program(gl, this.material.vsSrc, this.material.fsSrc, { uniforms: this.material.uniform_keys, attribs: this.material.attibute_keys })
+        this.shaderContext = getShaderContext(gl, this.material.vsSrc, this.material.fsSrc, { uniforms: this.material.uniform_keys, attribs: this.material.attibute_keys })
 
         if (mesh.hasVertices) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -155,8 +155,8 @@ export class RenderPass {
     draw(camera: THREE.Camera, transform: TRSTransform, lightPos?: number[]) {
         const gl = this.gl;
         if (lightPos) {
-            this.gl.useProgram(this.program.glShaderProgram);
-            this.gl.uniform3fv(this.program.uniforms.uLightPos, lightPos);
+            this.gl.useProgram(this.shaderContext.glShaderProgram);
+            this.gl.uniform3fv(this.shaderContext.uniforms.uLightPos, lightPos);
         }
         let modelViewMatrix = mat4.create();
         let projectionMatrix = mat4.create();
@@ -186,14 +186,14 @@ export class RenderPass {
             const offset = 0;
             gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
             gl.vertexAttribPointer(
-                this.program.attribs[this.mesh.verticesName],
+                this.shaderContext.attribs[this.mesh.verticesName],
                 numComponents,
                 type,
                 normalize,
                 stride,
                 offset);
             gl.enableVertexAttribArray(
-                this.program.attribs[this.mesh.verticesName]);
+                this.shaderContext.attribs[this.mesh.verticesName]);
         }
 
         if (this.mesh.hasNormals) {
@@ -204,14 +204,14 @@ export class RenderPass {
             const offset = 0;
             gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
             gl.vertexAttribPointer(
-                this.program.attribs[this.mesh.normalsName],
+                this.shaderContext.attribs[this.mesh.normalsName],
                 numComponents,
                 type,
                 normalize,
                 stride,
                 offset);
             gl.enableVertexAttribArray(
-                this.program.attribs[this.mesh.normalsName]);
+                this.shaderContext.attribs[this.mesh.normalsName]);
         }
 
         if (this.mesh.hasTexcoords) {
@@ -222,56 +222,56 @@ export class RenderPass {
             const offset = 0;
             gl.bindBuffer(gl.ARRAY_BUFFER, this.texcoordBuffer);
             gl.vertexAttribPointer(
-                this.program.attribs[this.mesh.texcoordsName],
+                this.shaderContext.attribs[this.mesh.texcoordsName],
                 numComponents,
                 type,
                 normalize,
                 stride,
                 offset);
             gl.enableVertexAttribArray(
-                this.program.attribs[this.mesh.texcoordsName]);
+                this.shaderContext.attribs[this.mesh.texcoordsName]);
         }
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indicesBuffer);
 
-        gl.useProgram(this.program.glShaderProgram);
+        gl.useProgram(this.shaderContext.glShaderProgram);
 
         gl.uniformMatrix4fv(
-            this.program.uniforms.uProjectionMatrix,
+            this.shaderContext.uniforms.uProjectionMatrix,
             false,
             projectionMatrix);
         gl.uniformMatrix4fv(
-            this.program.uniforms.uModelViewMatrix,
+            this.shaderContext.uniforms.uModelViewMatrix,
             false,
             modelViewMatrix);
 
         // Specific the camera uniforms
         gl.uniform3fv(
-            this.program.uniforms.uCameraPos,
+            this.shaderContext.uniforms.uCameraPos,
             [camera.position.x, camera.position.y, camera.position.z]);
 
         for (let k in this.material.uniforms) {
             if (this.material.uniforms[k].type == 'matrix4fv') {
                 gl.uniformMatrix4fv(
-                    this.program.uniforms[k],
+                    this.shaderContext.uniforms[k],
                     false,
                     this.material.uniforms[k].value);
             } else if (this.material.uniforms[k].type == '3fv') {
                 gl.uniform3fv(
-                    this.program.uniforms[k],
+                    this.shaderContext.uniforms[k],
                     this.material.uniforms[k].value);
             } else if (this.material.uniforms[k].type == '1f') {
                 gl.uniform1f(
-                    this.program.uniforms[k],
+                    this.shaderContext.uniforms[k],
                     this.material.uniforms[k].value);
             } else if (this.material.uniforms[k].type == '1i') {
                 gl.uniform1i(
-                    this.program.uniforms[k],
+                    this.shaderContext.uniforms[k],
                     this.material.uniforms[k].value);
             } else if (this.material.uniforms[k].type == 'texture') {
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, createTexture(gl, this.material.uniforms[k].value));
-                gl.uniform1i(this.program.uniforms[k], 0);
+                gl.uniform1i(this.shaderContext.uniforms[k], 0);
             }
         }
 
@@ -286,14 +286,15 @@ export class RenderPass {
 
 
 export class CameraRenderPass {
-    constructor(private gl: WebGLRenderingContext, private program: WebGLContext) {
+    constructor(private gl: WebGLRenderingContext) {
 
     }
-    draw(scene: Scene, lightPos: number[], guiParams: GUIParams) {
+
+    batch_draw(scene: Scene, lightPos: number[], guiParams: GUIParams, shaderContext: ShaderContext) {
         const gl = this.gl;
         if (lightPos) {
-            this.gl.useProgram(this.program.glShaderProgram);
-            this.gl.uniform3fv(this.program.uniforms.uLightPos, lightPos);
+            this.gl.useProgram(shaderContext.glShaderProgram);
+            this.gl.uniform3fv(shaderContext.uniforms.uLightPos, lightPos);
         }
         let modelViewMatrix = mat4.create();
         let projectionMatrix = mat4.create();
@@ -330,14 +331,14 @@ export class CameraRenderPass {
                 const offset = 0;
                 gl.bindBuffer(gl.ARRAY_BUFFER, entity.mesh.vertexBuffer);
                 gl.vertexAttribPointer(
-                    this.program.attribs[scene.entities[i].mesh.verticesName],
+                    shaderContext.attribs[scene.entities[i].mesh.verticesName],
                     numComponents,
                     type,
                     normalize,
                     stride,
                     offset);
                 gl.enableVertexAttribArray(
-                    this.program.attribs[scene.entities[i].mesh.verticesName]);
+                    shaderContext.attribs[scene.entities[i].mesh.verticesName]);
             }
 
 
@@ -349,14 +350,14 @@ export class CameraRenderPass {
                 const offset = 0;
                 gl.bindBuffer(gl.ARRAY_BUFFER, entity.mesh.normalBuffer);
                 gl.vertexAttribPointer(
-                    this.program.attribs[scene.entities[i].mesh.normalsName],
+                    shaderContext.attribs[scene.entities[i].mesh.normalsName],
                     numComponents,
                     type,
                     normalize,
                     stride,
                     offset);
                 gl.enableVertexAttribArray(
-                    this.program.attribs[scene.entities[i].mesh.normalsName]);
+                    shaderContext.attribs[scene.entities[i].mesh.normalsName]);
             }
 
             if (entity.mesh.texcoordBuffer) {
@@ -367,56 +368,56 @@ export class CameraRenderPass {
                 const offset = 0;
                 gl.bindBuffer(gl.ARRAY_BUFFER, entity.mesh.normalBuffer);
                 gl.vertexAttribPointer(
-                    this.program.attribs[scene.entities[i].mesh.texcoordsName],
+                    shaderContext.attribs[scene.entities[i].mesh.texcoordsName],
                     numComponents,
                     type,
                     normalize,
                     stride,
                     offset);
                 gl.enableVertexAttribArray(
-                    this.program.attribs[scene.entities[i].mesh.texcoordsName]);
+                    shaderContext.attribs[scene.entities[i].mesh.texcoordsName]);
             }
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, entity.mesh.indicesBuffer);
 
-            gl.useProgram(this.program.glShaderProgram);
+            gl.useProgram(shaderContext.glShaderProgram);
 
             gl.uniformMatrix4fv(
-                this.program.uniforms.uProjectionMatrix,
+                shaderContext.uniforms.uProjectionMatrix,
                 false,
                 projectionMatrix);
             gl.uniformMatrix4fv(
-                this.program.uniforms.uModelViewMatrix,
+                shaderContext.uniforms.uModelViewMatrix,
                 false,
                 modelViewMatrix);
 
             // Specific the camera uniforms
             gl.uniform3fv(
-                this.program.uniforms.uCameraPos,
+                shaderContext.uniforms.uCameraPos,
                 [scene.camera.position.x, scene.camera.position.y, scene.camera.position.z]);
 
             for (let k in scene.entities[i].material.uniforms) {
                 if (scene.entities[i].material.uniforms[k].type == 'matrix4fv') {
                     gl.uniformMatrix4fv(
-                        this.program.uniforms[k],
+                        shaderContext.uniforms[k],
                         false,
                         scene.entities[i].material.uniforms[k].value);
                 } else if (scene.entities[i].material.uniforms[k].type == '3fv') {
                     gl.uniform3fv(
-                        this.program.uniforms[k],
+                        shaderContext.uniforms[k],
                         scene.entities[i].material.uniforms[k].value);
                 } else if (scene.entities[i].material.uniforms[k].type == '1f') {
                     gl.uniform1f(
-                        this.program.uniforms[k],
+                        shaderContext.uniforms[k],
                         scene.entities[i].material.uniforms[k].value);
                 } else if (scene.entities[i].material.uniforms[k].type == '1i') {
                     gl.uniform1i(
-                        this.program.uniforms[k],
+                        shaderContext.uniforms[k],
                         scene.entities[i].material.uniforms[k].value);
                 } else if (scene.entities[i].material.uniforms[k].type == 'texture') {
                     gl.activeTexture(gl.TEXTURE0);
                     gl.bindTexture(gl.TEXTURE_2D, entity.material.textures[0]);
-                    gl.uniform1i(this.program.uniforms[k], 0);
+                    gl.uniform1i(shaderContext.uniforms[k], 0);
                 }
             }
 
@@ -429,4 +430,5 @@ export class CameraRenderPass {
         }
 
     }
+
 }

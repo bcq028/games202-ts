@@ -1,6 +1,6 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { CameraRenderPass, reset_gl } from "./RenderPass";
+import { reset_gl } from "./RenderPass";
 import { RenderPass } from "./RenderPass"
 
 interface GUIParams {
