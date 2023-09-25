@@ -12,15 +12,7 @@ interface GUIParams {
     modelScaleZ: number;
 }
 
-export interface ShaderContext {
-    glShaderProgram: WebGLProgram,
-    uniforms?: {
-        [key: string]: WebGLUniformLocation
-    }
-    attribs?: {
-        [key: string]: number
-    }
-}
+
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -33,65 +25,6 @@ export function reset_gl(gl: WebGLRenderingContext) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
-export function getShaderContext(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string, shaderLocations: {
-    uniforms: string[],
-    attribs: string[]
-}): ShaderContext {
-    function compileShader(shaderSource: string, shaderType: number) {
-        const shader = gl.createShader(shaderType)!;
-        gl.shaderSource(shader, shaderSource);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error("shader compiler error");
-        }
-        return shader;
-    }
-    function getProgramLinked(vs: WebGLShader, fs: WebGLShader) {
-        const prog = gl.createProgram()!;
-        gl.attachShader(prog, vs);
-        gl.attachShader(prog, fs);
-        gl.linkProgram(prog);
-
-        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-            alert('shader linker error:\n' + gl.getProgramInfoLog(prog));
-        }
-        return prog;
-    };
-
-
-    /**
-     * get location of shader parameter and bind them to uniform/attribute keys
-     * we can refer to the location to set variable 
-     */
-    function addShaderLocations(result: ShaderContext, shaderLocations: {
-        uniforms: string[],
-        attribs: string[]
-    }) {
-        result.uniforms = {};
-        result.attribs = {};
-
-        if (shaderLocations && shaderLocations.uniforms && shaderLocations.uniforms.length) {
-            for (let i = 0; i < shaderLocations.uniforms.length; ++i) {
-                Object.assign(result.uniforms, {
-                    [shaderLocations.uniforms[i]]: gl.getUniformLocation(result.glShaderProgram, shaderLocations.uniforms[i]),
-                });
-            }
-        }
-        if (shaderLocations && shaderLocations.attribs && shaderLocations.attribs.length) {
-            for (let i = 0; i < shaderLocations.attribs.length; ++i) {
-                Object.assign(result.attribs, {
-                    [shaderLocations.attribs[i]]: gl.getAttribLocation(result.glShaderProgram, shaderLocations.attribs[i]),
-                });
-            }
-        }
-    }
-
-    const vs = compileShader(vsSrc, gl.VERTEX_SHADER);
-    const fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
-    let rhi_program = { glShaderProgram: getProgramLinked(vs, fs) }
-    addShaderLocations(rhi_program, shaderLocations);
-    return rhi_program;
-}
 
 export class CameraRenderPass {
     uniforms: Record<string, WebGLUniformLocation> = {}
@@ -117,7 +50,7 @@ export class CameraRenderPass {
         }
     }
 
-    draw_forward(scene: Scene, guiParams: GUIParams, lightPos: [number,number,number]) {
+    draw_forward(scene: Scene, guiParams: GUIParams, lightPos: [number, number, number]) {
 
         let modelViewMatrix = mat4.create();
         let projectionMatrix = mat4.create();
@@ -130,16 +63,16 @@ export class CameraRenderPass {
             number, number, number, number,
             number, number, number, number
         ]);
-        let dynamicLightMatrix=structuredClone(modelViewMatrix);
-        mat4.translate(dynamicLightMatrix,dynamicLightMatrix,lightPos);
+        let dynamicLightMatrix = structuredClone(modelViewMatrix);
+        mat4.translate(dynamicLightMatrix, dynamicLightMatrix, lightPos);
 
         mat4.translate(modelViewMatrix, modelViewMatrix, transform.translate);
         mat4.scale(modelViewMatrix, modelViewMatrix, transform.scale);
 
-        let scaledMatrix=structuredClone(modelViewMatrix);
-        let t=structuredClone(transform.scale);
-        for(let i=0;i<t.length;++i){
-            t[i]=1/t[i];
+        let scaledMatrix = structuredClone(modelViewMatrix);
+        let t = structuredClone(transform.scale);
+        for (let i = 0; i < t.length; ++i) {
+            t[i] = 1 / t[i];
         }
         mat4.scale(modelViewMatrix, scaledMatrix, t);
         mat4.copy(projectionMatrix, scene.camera.projectionMatrix.elements as unknown as [
@@ -151,10 +84,10 @@ export class CameraRenderPass {
 
         scene.camera.updateMatrixWorld();
         for (let [material, meshes] of scene.rhiBatchedEntities) {
-            if('intensity' in scene.RhiMaterial2Material.get(material)){
-                modelViewMatrix=dynamicLightMatrix;
-            }else{
-                modelViewMatrix=scaledMatrix;
+            if ('intensity' in scene.RhiMaterial2Material.get(material)) {
+                modelViewMatrix = dynamicLightMatrix;
+            } else {
+                modelViewMatrix = scaledMatrix;
             }
             this.setShaderLocations(material.shaderProgram, scene.RhiMaterial2Material.get(material).uniform_keys, scene.RhiMaterial2Material.get(material).attibute_keys);
             this.gl.useProgram(material.shaderProgram);
