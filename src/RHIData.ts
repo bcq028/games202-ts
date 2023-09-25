@@ -66,7 +66,7 @@ export function createWebGLMaterial(gl: WebGLRenderingContext, material: Materia
     }
 
     const vs = compileShader(material.vsSrc, gl.VERTEX_SHADER);
-    const fs = compileShader(material.fsSrc, gl.FRAMEBUFFER);
+    const fs = compileShader(material.fsSrc, gl.FRAGMENT_SHADER);
 
     gl.attachShader(ret.shaderProgram, vs);
     gl.attachShader(ret.shaderProgram, fs);
