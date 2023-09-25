@@ -1,14 +1,18 @@
 import * as THREE from 'three'
 import { Entity } from "./Entity";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { RHIEntity, createWebGLMaterial, createWebGLMesh } from './RHIData';
+import { RHIMaterial, RHIMesh, createWebGLMaterial, createWebGLMesh } from './RHIData';
+import { Material } from './Material';
+import { Mesh } from './Mesh';
 
 const cameraPosition = [-20, 180, 250];
 
 export class Scene {
     public entities: Entity[] = []
     public lights: Entity[] = []
-    public rhiEntities: RHIEntity[] = []
+    public rhiBatchedEntities: Map<RHIMaterial, RHIMesh[]> = new Map();
+    public RhiMaterial2Material: Map<RHIMaterial, Material> = new Map();
+    public RhiMesh2Mesh: Map<RHIMesh, Mesh> = new Map();
     public camera: THREE.Camera
     public cameraControls: OrbitControls
     private gl: WebGLRenderingContext
@@ -21,8 +25,23 @@ export class Scene {
 
 
     public addEntity(entity: Entity) {
-        this.entities.push(entity)
-        this.rhiEntities.push({ mesh: createWebGLMesh(this.gl, entity.mesh), material: createWebGLMaterial(this.gl, entity.material) })
+        this.entities.push(entity);
+        if (entity.mesh.hasNormals) {
+            entity.material.attibute_keys.push(entity.mesh.normalsName);
+        }
+        if (entity.mesh.hasTexcoords) {
+            entity.material.attibute_keys.push(entity.mesh.texcoordsName);
+        }
+        if (entity.mesh.hasVertices) {
+            entity.material.attibute_keys.push(entity.mesh.verticesName);
+        }
+        const rhiMesh = createWebGLMesh(this.gl, entity.mesh);
+        const rhiMaterial = createWebGLMaterial(this.gl, entity.material);
+        this.RhiMaterial2Material.set(rhiMaterial, entity.material);
+        this.RhiMesh2Mesh.set(rhiMesh, entity.mesh);
+        let entry = this.rhiBatchedEntities.get(rhiMaterial) || [];
+        entry.push(rhiMesh);
+        this.rhiBatchedEntities.set(rhiMaterial, entry);
     }
     public addLight(light: Entity) {
         this.lights.push(light)
