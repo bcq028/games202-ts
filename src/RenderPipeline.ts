@@ -1,7 +1,6 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { reset_gl } from "./RenderPass";
-import { RenderPass } from "./RenderPass"
+import { CameraRenderPass, reset_gl } from "./RenderPass";
 
 interface GUIParams {
     modelTransX: number;
@@ -50,7 +49,7 @@ export class RenderPipeline {
         panelModelTrans.open();
         panelModelScale.open();
     }
-    render(gl: WebGLRenderingContext, scene: Scene) {
+    render_forward(gl: WebGLRenderingContext, scene: Scene) {
 
         reset_gl(gl)
 
@@ -61,18 +60,9 @@ export class RenderPipeline {
         Math.cos(timer * 2) * 100] as [number, number, number];
 
         for (let l = 0; l < scene.lights.length; l++) {
-            let trans = new TRSTransform(lightPos);
-            const meshRender = new RenderPass(gl, scene.lights[l].mesh, scene.lights[l].material);
-            meshRender.draw(scene.camera, trans);
-
-            for (let i = 0; i < scene.entities.length; i++) {
-                const mesh = scene.entities[i];
-
-                const modelTranslation = [this.guiParams.modelTransX, this.guiParams.modelTransY, this.guiParams.modelTransZ] as [number, number, number];
-                const modelScale = [this.guiParams.modelScaleX, this.guiParams.modelScaleY, this.guiParams.modelScaleZ] as [number, number, number];
-                let meshTrans = new TRSTransform(modelTranslation, modelScale);
-                new RenderPass(gl, mesh.mesh, mesh.material).draw(scene.camera, meshTrans, lightPos)
-            }
+            const camera_renderpass = new CameraRenderPass(gl);
+            camera_renderpass.draw_forward(scene, this.guiParams, lightPos);
         }
+
     }
 }

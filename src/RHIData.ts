@@ -9,9 +9,10 @@ export interface RHIMesh {
 }
 
 export interface RHIMaterial {
-    textures: WebGLTexture[]
+    textures: WebGLTexture[],
+    // program with shader linked
+    shaderProgram: WebGLProgram,
 }
-
 export interface RHIEntity {
     mesh: RHIMesh
     material: RHIMaterial
@@ -19,23 +20,23 @@ export interface RHIEntity {
 
 export function createWebGLMesh(gl: WebGLRenderingContext, mesh: Mesh) {
     let ret: RHIMesh = {
-        indicesBuffer:gl.createBuffer()
+        indicesBuffer: gl.createBuffer()
     }
 
     if (mesh.hasVertices) {
-        ret.vertexBuffer=gl.createBuffer()
+        ret.vertexBuffer = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, ret.vertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, mesh.vertices, gl.STATIC_DRAW);
     }
 
     if (mesh.hasNormals) {
-        ret.normalBuffer=gl.createBuffer()
+        ret.normalBuffer = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, ret.normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, mesh.normals, gl.STATIC_DRAW);
     }
 
     if (mesh.hasTexcoords) {
-        ret.texcoordBuffer=gl.createBuffer()
+        ret.texcoordBuffer = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, ret.texcoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, mesh.texcoords, gl.STATIC_DRAW);
     }
@@ -47,11 +48,31 @@ export function createWebGLMesh(gl: WebGLRenderingContext, mesh: Mesh) {
 
 
 export function createWebGLMaterial(gl: WebGLRenderingContext, material: Material) {
-    let ret: RHIMaterial = { textures: [] }
+    let ret: RHIMaterial = { textures: [], shaderProgram: gl.createProgram() }
     for (let k in material.uniforms) {
         if (material.uniforms[k].type == 'texture') {
-            ret.textures.push(createTexture(gl, this.material.uniforms[k].value));
+            ret.textures.push(createTexture(gl, material.uniforms[k].value));
         }
+    }
+    const compileShader = (shaderSource: string, shaderType: number) => {
+        const shader = gl.createShader(shaderType)!;
+        gl.shaderSource(shader, shaderSource);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error("shader compiler error");
+        }
+        return shader;
+    }
+
+    const vs = compileShader(material.vsSrc, gl.VERTEX_SHADER);
+    const fs = compileShader(material.fsSrc, gl.FRAGMENT_SHADER);
+
+    gl.attachShader(ret.shaderProgram, vs);
+    gl.attachShader(ret.shaderProgram, fs);
+    gl.linkProgram(ret.shaderProgram);
+
+    if (!gl.getProgramParameter(ret.shaderProgram, gl.LINK_STATUS)) {
+        alert('shader linker error:\n' + gl.getProgramInfoLog(ret.shaderProgram));
     }
     return ret
 }
