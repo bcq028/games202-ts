@@ -23,7 +23,7 @@ function main() {
 
   function mainLoop() {
     scene.cameraControls.update();
-    renderPipeline.render(gl, scene);
+    renderPipeline.render_forward(gl, scene);
     requestAnimationFrame(mainLoop);
   }
   requestAnimationFrame(mainLoop);

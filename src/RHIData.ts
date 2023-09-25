@@ -51,7 +51,7 @@ export function createWebGLMaterial(gl: WebGLRenderingContext, material: Materia
     let ret: RHIMaterial = { textures: [], shaderProgram: gl.createProgram() }
     for (let k in material.uniforms) {
         if (material.uniforms[k].type == 'texture') {
-            ret.textures.push(createTexture(gl, this.material.uniforms[k].value));
+            ret.textures.push(createTexture(gl, material.uniforms[k].value));
         }
     }
 
