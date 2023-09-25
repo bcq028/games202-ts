@@ -44,7 +44,8 @@ export class Scene {
         this.rhiBatchedEntities.set(rhiMaterial, entry);
     }
     public addLight(light: Entity) {
-        this.lights.push(light)
+        this.lights.push(light);
+        this.addEntity(light);
     }
 
     public camera_init(canvas: HTMLCanvasElement) {

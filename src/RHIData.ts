@@ -54,7 +54,6 @@ export function createWebGLMaterial(gl: WebGLRenderingContext, material: Materia
             ret.textures.push(createTexture(gl, material.uniforms[k].value));
         }
     }
-
     const compileShader = (shaderSource: string, shaderType: number) => {
         const shader = gl.createShader(shaderType)!;
         gl.shaderSource(shader, shaderSource);
