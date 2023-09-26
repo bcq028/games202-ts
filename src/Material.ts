@@ -6,18 +6,11 @@ export interface ShaderVar {
 }
 
 export class Material {
-  uniform_keys: string[] = []
-  attibute_keys: string[] = []
   uniforms: { [key: string]: ShaderVar }
-  attribs: string[]
   vsSrc: string = ""
   fsSrc: string = ""
-  constructor(uniforms: { [key: string]: ShaderVar }, attribs: string[], vsSrc: string, fsSrc: string) {
-    this.uniform_keys = ['uModelMatrix', 'uViewMatrix', 'uProjectionMatrix', 'uCameraPos', 'uLightPos'];
-    this.uniform_keys.push(...Object.keys(uniforms));
-    this.attibute_keys.push(...Object.keys(attribs));
+  constructor(uniforms: { [key: string]: ShaderVar }, vsSrc: string, fsSrc: string) {
     this.uniforms = uniforms;
-    this.attribs = attribs;
     this.fsSrc = fsSrc;
     this.vsSrc = vsSrc;
   }
@@ -30,20 +23,30 @@ export class PhongMaterial extends Material {
     if (colorMap != null) {
       textureSample = 1;
       super({
+        'uModelMatrix': { type: 'matrix4fv', value: undefined },
+        'uViewMatrix': { type: 'matrix4fv', value: undefined },
+        'uCameraPos': { type: '3fv', value: undefined },
+        'uLightPos': { type: '3fv', value: undefined },
+        'uProjectionMatrix': { type: 'matrix4fv', value: undefined },
         'uTextureSample': { type: '1i', value: textureSample },
         'uSampler': { type: 'texture', value: colorMap },
         'uKd': { type: '3fv', value: color },
         'uKs': { type: '3fv', value: specular },
         'uLightIntensity': { type: '1f', value: intensity }
-      }, [], PhongVertexShader, PhongFragmentShader);
+      }, PhongVertexShader, PhongFragmentShader);
     } else {
       //console.log(color);
       super({
+        'uModelMatrix': { type: 'matrix4fv', value: undefined },
+        'uViewMatrix': { type: 'matrix4fv', value: undefined },
+        'uProjectionMatrix': { type: 'matrix4fv', value: undefined },
+        'uCameraPos': { type: '3fv', value: undefined },
+        'uLightPos': { type: '3fv', value: undefined },
         'uTextureSample': { type: '1i', value: textureSample },
         'uKd': { type: '3fv', value: color },
         'uKs': { type: '3fv', value: specular },
         'uLightIntensity': { type: '1f', value: intensity }
-      }, [], PhongVertexShader, PhongFragmentShader);
+      }, PhongVertexShader, PhongFragmentShader);
     }
 
   }
@@ -54,9 +57,14 @@ export class EmissiveMaterial extends Material {
   color: number[]
   constructor(lightIntensity: number, lightColor: number[]) {
     super({
+      'uModelMatrix': { type: 'matrix4fv', value: undefined },
+      'uViewMatrix': { type: 'matrix4fv', value: undefined },
+      'uProjectionMatrix': { type: 'matrix4fv', value: undefined },
+      'uCameraPos': { type: '3fv', value: undefined },
+      'uLightPos': { type: '3fv', value: undefined },
       'uLigIntensity': { type: '1f', value: lightIntensity },
       'uLightColor': { type: '3fv', value: lightColor }
-    }, [], LightCubeVertexShader, LightCubeFragmentShader);
+    }, LightCubeVertexShader, LightCubeFragmentShader);
 
     this.intensity = lightIntensity;
     this.color = lightColor;

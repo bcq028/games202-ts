@@ -10,6 +10,7 @@ export class Mesh {
     normalsName?: string;
     texcoords?: Float32Array;
     texcoordsName?: string;
+    attribs:string[]=[];
     constructor(indices: number[], verticesAttrib?: { name: string; array: Float32Array; }, normalsAttrib?: { name: string; array: Float32Array; }, texcoordsAttrib?: { name: string; array: Float32Array; }) {
         this.indices = indices;
         this.count = indices.length;
@@ -21,16 +22,19 @@ export class Mesh {
             this.hasVertices = true;
             this.vertices = verticesAttrib.array;
             this.verticesName = verticesAttrib.name;
+            this.attribs.push(this.verticesName);
         }
         if (normalsAttrib != null) {
             this.hasNormals = true;
             this.normals = normalsAttrib.array;
             this.normalsName = normalsAttrib.name;
+            this.attribs.push(this.normalsName);
         }
         if (texcoordsAttrib != null) {
             this.hasTexcoords = true;
             this.texcoords = texcoordsAttrib.array;
             this.texcoordsName = texcoordsAttrib.name;
+            this.attribs.push(this.texcoordsName);
         }
     }
 }

@@ -90,11 +90,15 @@ export class CameraRenderPass {
             } else {
                 ModelMatrix = scaledMatrix;
             }
-            this.setShaderLocations(material.shaderProgram, scene.RhiMaterial2Material.get(material).uniform_keys, scene.RhiMaterial2Material.get(material).attibute_keys);
+            this.setShaderLocations(material.shaderProgram, Object.keys(scene.RhiMaterial2Material.get(material).uniforms), scene.RhiMesh2Mesh.get(meshes[0]).attribs);
             this.gl.useProgram(material.shaderProgram);
-            if (lightPos) {
-                this.gl.uniform3fv(this.uniformLocation.uLightPos, lightPos);
-            }
+      
+            scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
+            scene.RhiMaterial2Material.get(material).uniforms['uModelMatrix'].value = ModelMatrix;
+            scene.RhiMaterial2Material.get(material).uniforms['uViewMatrix'].value = ViewMatrix;
+            scene.RhiMaterial2Material.get(material).uniforms['uCameraPos'].value = [scene.camera.position.x, scene.camera.position.y, scene.camera.position.z];
+            scene.RhiMaterial2Material.get(material).uniforms['uLightPos'].value =lightPos;
+            
             for (let k in scene.RhiMaterial2Material.get(material).uniforms) {
                 if (scene.RhiMaterial2Material.get(material).uniforms[k].type == 'matrix4fv') {
                     this.gl.uniformMatrix4fv(
@@ -172,21 +176,6 @@ export class CameraRenderPass {
                         this.attributeLayout[scene.RhiMesh2Mesh.get(mesh).texcoordsName]);
                 }
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, mesh.indicesBuffer);
-                this.gl.uniformMatrix4fv(
-                    this.uniformLocation.uProjectionMatrix,
-                    false,
-                    projectionMatrix);
-                this.gl.uniformMatrix4fv(
-                    this.uniformLocation.uModelMatrix,
-                    false,
-                    ModelMatrix);
-                this.gl.uniformMatrix4fv(
-                    this.uniformLocation.uViewMatrix,
-                    false,
-                    ViewMatrix);
-                this.gl.uniform3fv(
-                    this.uniformLocation.uCameraPos,
-                    [scene.camera.position.x, scene.camera.position.y, scene.camera.position.z]);
                 const vertexCount = scene.RhiMesh2Mesh.get(mesh).count;
                 const type = this.gl.UNSIGNED_SHORT;
                 const offset = 0;

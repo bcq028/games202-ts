@@ -26,15 +26,6 @@ export class Scene {
 
     public addEntity(entity: Entity) {
         this.entities.push(entity);
-        if (entity.mesh.hasNormals) {
-            entity.material.attibute_keys.push(entity.mesh.normalsName);
-        }
-        if (entity.mesh.hasTexcoords) {
-            entity.material.attibute_keys.push(entity.mesh.texcoordsName);
-        }
-        if (entity.mesh.hasVertices) {
-            entity.material.attibute_keys.push(entity.mesh.verticesName);
-        }
         const rhiMesh = createWebGLMesh(this.gl, entity.mesh);
         const rhiMaterial = createWebGLMaterial(this.gl, entity.material);
         this.RhiMaterial2Material.set(rhiMaterial, entity.material);
