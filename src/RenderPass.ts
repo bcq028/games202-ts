@@ -52,6 +52,8 @@ export class CameraRenderPass {
 
     draw_forward(scene: Scene, guiParams: GUIParams, lightPos: [number, number, number]) {
 
+        //TODO:clarify how to reorganize these swap data
+        scene.camera.updateMatrixWorld();
         let ModelMatrix = mat4.create();
         let ViewMatrix = mat4.create();
         let projectionMatrix = mat4.create();
@@ -83,7 +85,6 @@ export class CameraRenderPass {
             number, number, number, number
         ]);
 
-        scene.camera.updateMatrixWorld();
         for (let [material, meshes] of scene.rhiBatchedEntities) {
             if ('intensity' in scene.RhiMaterial2Material.get(material)) {
                 ModelMatrix = dynamicLightMatrix;
