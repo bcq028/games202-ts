@@ -22,7 +22,6 @@ function main() {
   const renderPipeline = new RenderPipeline()
 
   function mainLoop() {
-    scene.cameraControls.update();
     renderPipeline.render_forward(gl, scene);
     requestAnimationFrame(mainLoop);
   }
