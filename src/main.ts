@@ -18,6 +18,8 @@ function main() {
   const scene = new Scene(canvas,gl);
   scene.addLight(pointLight);
   loadOBJ(scene, 'assets/mary/', 'Marry');
+  loadOBJ(scene, 'assets/mary/', 'Marry2');
+  loadOBJ(scene, 'assets/floor/', 'Floor');
 
   const renderPipeline = new RenderPipeline()
 

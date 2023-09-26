@@ -59,6 +59,8 @@ export class RenderPipeline {
         Math.cos(timer * 4) * 150,
         Math.cos(timer * 2) * 100] as [number, number, number];
 
+        lightPos=[0,100,200];
+
         for (let l = 0; l < scene.lights.length; l++) {
             const camera_renderpass = new CameraRenderPass(gl);
             camera_renderpass.draw_forward(scene, this.guiParams, lightPos);
