@@ -21,9 +21,6 @@ export class Material {
     this.fsSrc = fsSrc;
     this.vsSrc = vsSrc;
   }
-  setMeshAttribs(attribs: string[]) {
-    this.attibute_keys.push(...attribs)
-  }
 }
 
 export class PhongMaterial extends Material {

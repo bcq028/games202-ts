@@ -35,10 +35,10 @@ export function loadOBJ(scene: Scene, path: string, name: string) {
         .setMaterials(materials)
         .setPath(path)
         .load(name + '.obj', function (object) {
-          object.traverse(function (child: any) {
-            if (child.isMesh) {
+          object.traverse(function (child) {
+            if (child instanceof THREE.Mesh) {
               let geo = child.geometry;
-              let mat;
+              let mat: { map: { image: HTMLImageElement; }; color: { toArray: () => number[]; }; specular: { toArray: () => number[]; }; };
               if (Array.isArray(child.material)) mat = child.material[0];
               else mat = child.material;
 
