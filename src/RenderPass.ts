@@ -90,7 +90,7 @@ export class CameraRenderPass {
             } else {
                 ModelMatrix = scaledMatrix;
             }
-            this.setShaderLocations(material.shaderProgram, Object.keys(scene.RhiMaterial2Material.get(material).uniforms), scene.RhiMesh2Mesh.get(meshes[0]).attribs);
+            this.setShaderLocations(material.shaderProgram, Object.keys(scene.RhiMaterial2Material.get(material).uniforms), Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
             this.gl.useProgram(material.shaderProgram);
       
             scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
