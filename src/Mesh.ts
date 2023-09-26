@@ -10,7 +10,7 @@ export class Mesh {
     normalsName?: string;
     texcoords?: Float32Array;
     texcoordsName?: string;
-    attribs: {[key: string]: {config:any,value:Float32Array} }={}
+    attribs: {[key: string]: Float32Array }={}
     constructor(indices: number[], verticesAttrib?: { name: string; array: Float32Array; }, normalsAttrib?: { name: string; array: Float32Array; }, texcoordsAttrib?: { name: string; array: Float32Array; }) {
         this.indices = indices;
         this.count = indices.length;
@@ -22,19 +22,19 @@ export class Mesh {
             this.hasVertices = true;
             this.vertices = verticesAttrib.array;
             this.verticesName = verticesAttrib.name;
-            this.attribs[this.verticesName]={config:undefined,value:this.vertices};
+            this.attribs[this.verticesName]=this.vertices
         }
         if (normalsAttrib != null) {
             this.hasNormals = true;
             this.normals = normalsAttrib.array;
             this.normalsName = normalsAttrib.name;
-            this.attribs[this.normalsName]={config:undefined,value:this.normals};
+            this.attribs[this.normalsName]=this.normals
         }
         if (texcoordsAttrib != null) {
             this.hasTexcoords = true;
             this.texcoords = texcoordsAttrib.array;
             this.texcoordsName = texcoordsAttrib.name;
-            this.attribs[this.texcoordsName]={config:undefined,value:this.texcoords};
+            this.attribs[this.texcoordsName]=this.texcoords
         }
     }
 }
