@@ -13,7 +13,7 @@ export class Vector {
     }
 }
 
-export function dotProduct(u: Vector, v: Vector) {
+export function dot(u: Vector, v: Vector) {
     let ret = 0;
     for (let i = 0; i < u.elements.length; ++i) {
         ret += u.elements[i] * v.elements[i];
@@ -33,7 +33,7 @@ export function scalarProduct(scalar: number, v: Vector) {
  * project_u(v) : project vector v onto vector u
  */
 export function projection(u: Vector, v: Vector) {
-    return scalarProduct(dotProduct(u, v) / dotProduct(u, u), u);
+    return scalarProduct(dot(u, v) / dot(u, u), u);
 }
 
 export function add(u: Vector, v: Vector) {
