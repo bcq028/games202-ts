@@ -69,7 +69,7 @@ export function normalize(u: Vector) {
     return ret;
 }
 
-export function crossProduct(u: Vector, v: Vector) {
+export function cross(u: Vector, v: Vector) {
     if (u.elements.length !== 3 || v.elements.length !== 3) {
         throw new Error('Cross product is defined for 3D vectors only.');
     }
@@ -91,5 +91,28 @@ export function crossProduct(u: Vector, v: Vector) {
 
 export function rotate_orth(u: Vector, v: Vector, theta: number) {
     u = normalize(u);
-    return add(scalarProduct(Math.cos(theta), v), scalarProduct(Math.sin(theta), crossProduct(u, v)));
+    return add(scalarProduct(Math.cos(theta), v), scalarProduct(Math.sin(theta), cross(u, v)));
+}
+
+/**
+ * euler is (x,y,z) describing rad of each axis rotation
+ */
+export function make_rotation_from_euler(euler: Vector) {
+    const ret = new Matrix([0, 0, 0, 0]);
+    const te = ret.elements;
+    const x = euler.elements[0], y = euler.elements[1], z = euler.elements[2];
+    const a = Math.cos(x), b = Math.sin(x);
+    const c = Math.cos(y), d = Math.sin(y);
+    const e = Math.cos(z), f = Math.sin(z);
+    const ae = a * e, af = a * f, be = b * e, bf = b * f;
+    te[0] = c * e;
+    te[4] = - c * f;
+    te[8] = d;
+    te[1] = af + be * d;
+    te[5] = ae - bf * d;
+    te[9] = - b * c;
+    te[2] = bf - ae * d;
+    te[6] = be + af * d;
+    te[10] = a * c;
+    return ret;
 }
