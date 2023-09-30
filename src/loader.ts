@@ -4,6 +4,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Mesh } from "./Mesh";
 import { PhongMaterial, EmissiveMaterial } from "./Material";
 import { Scene } from "./Scene";
+import { Entity } from "./Entity";
 
 function loadShader(filename: string) {
   return new Promise<string>((res, rej) => {
@@ -18,45 +19,45 @@ function loadShader(filename: string) {
   })
 }
 
-export function loadOBJ(scene: Scene, path: string, name: string) {
+export async function loadOBJ(scene: Scene, path: string, name: string) {
 
   const manager = new THREE.LoadingManager();
-  manager.onProgress = function (item, loaded, total) {
-    console.log(item, loaded, total);
-  };
+  return new Promise<Entity>((res, _) => {
+    new MTLLoader(manager)
+      .setPath(path)
+      .load(name + '.mtl', materials => {
+        materials.preload();
+        new OBJLoader(manager)
+          .setMaterials(materials)
+          .setPath(path)
+          .load(name + '.obj', (object) => {
+            object.traverse(child => {
+              if (child instanceof THREE.Mesh) {
+                let geo = child.geometry;
+                let mat: { map: { image: HTMLImageElement; }; color: { toArray: () => number[]; }; specular: { toArray: () => number[]; }; };
+                if (Array.isArray(child.material)) mat = child.material[0];
+                else mat = child.material;
 
-  function onError() { }
+                const indices = Array.from({ length: geo.attributes.position.count }, (_, k) => k);
+                let mesh = new Mesh(indices, { name: 'aVertexPosition', array: geo.attributes.position.array },
+                  { name: 'aNormalPosition', array: geo.attributes.normal.array },
+                  { name: 'aTextureCoord', array: geo.attributes.uv.array },
+                );
 
-  new MTLLoader(manager)
-    .setPath(path)
-    .load(name + '.mtl', function (materials) {
-      materials.preload();
-      new OBJLoader(manager)
-        .setMaterials(materials)
-        .setPath(path)
-        .load(name + '.obj', function (object) {
-          object.traverse(function (child) {
-            if (child instanceof THREE.Mesh) {
-              let geo = child.geometry;
-              let mat: { map: { image: HTMLImageElement; }; color: { toArray: () => number[]; }; specular: { toArray: () => number[]; }; };
-              if (Array.isArray(child.material)) mat = child.material[0];
-              else mat = child.material;
-
-              var indices = Array.from({ length: geo.attributes.position.count }, (_, k) => k);
-              let geometry = new Mesh(indices, { name: 'aVertexPosition', array: geo.attributes.position.array },
-                { name: 'aNormalPosition', array: geo.attributes.normal.array },
-                { name: 'aTextureCoord', array: geo.attributes.uv.array },
-              );
-
-              let colorMap: HTMLImageElement = null;
-              if (mat.map != null) colorMap = mat.map.image
-              let material = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
-                (scene.lights[0].material as EmissiveMaterial).intensity);
-              scene.addEntity({ mesh: geometry, material: material });
-            }
+                let colorMap: HTMLImageElement = null;
+                if (mat.map != null) colorMap = mat.map.image
+                let material = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
+                  (scene.lights[0].material as EmissiveMaterial).intensity);
+                const entity = new Entity(mesh, material);
+                scene.addEntity(entity);
+              }
+            });
+          }, (err) => {
+            console.log(err)
           });
-        }, null, onError);
-    });
+      });
+  })
+
 }
 
 

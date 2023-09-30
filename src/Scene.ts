@@ -20,7 +20,7 @@ export class Scene {
         this.gl = gl
         const { camera, cameraControls } = this.camera_init(canvas)
         this.camera = camera;
-        this.cameraControls = cameraControls
+        this.cameraControls = cameraControls;
     }
 
 
