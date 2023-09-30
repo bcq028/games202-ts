@@ -1,8 +1,8 @@
-import { Matrix, multiply } from '../src/math/Matrix';
+import { Matrix, Vector, lookAt, multiply } from '../src/math/Matrix';
 
 const epsilon = 1e-6; // A small value to account for floating point errors
 
-const areMatricesEqual = (a: Matrix, b: Matrix) => {
+function VectorEqual<T extends Matrix | Vector>(a: T, b: T) {
     for (let i = 0; i < a.elements.length; i++) {
         if (Math.abs(a.elements[i] - b.elements[i]) > epsilon) {
             return false;
@@ -19,7 +19,7 @@ describe('Matrix multiplication', () => {
         const result = multiply(identityMatrix, matrix);
 
         // The result should be the same as the original matrix
-        expect(areMatricesEqual(result, matrix)).toBe(true);
+        expect(VectorEqual(result, matrix)).toBe(true);
     });
 
     test('Multiplication of two arbitrary matrices', () => {
@@ -28,9 +28,26 @@ describe('Matrix multiplication', () => {
         const expectedProduct = new Matrix([386, 444, 502, 560, 274, 316, 358, 400, 162, 188, 214, 240, 50, 60, 70, 80]);
         const result = multiply(matrixA, matrixB);
         // The result should match the expected product
-        expect(areMatricesEqual(result, expectedProduct)).toBe(true);
+        expect(VectorEqual(result, expectedProduct)).toBe(true);
     });
 
-    // Add more test cases as needed
+    test('make rotation', () => {
+        const v = Vector.from(1, 0, 0);
+        const m = Matrix.make_rotation(Vector.from(0, 0, 1), Math.PI / 2);
+        v.applyMatrix(m);
+        expect(VectorEqual(v, Vector.from(0, 1, 0)));
+    })
+
+    test('lookAt up is same', () => {
+        const eye = Vector.make_zero();
+        const target = Vector.from(0, 1, -1);
+        const up = Vector.from(0, 1, -1);
+        const mr = Matrix.make_rotation(Vector.from(1,0,0), Math.PI / 2);
+        up.applyMatrix(mr);
+        const m = lookAt(eye, target, up);
+        const y = new Vector(m.elements.slice(4, 7));
+        expect(VectorEqual(y, up.normalize()));
+    })
+
 });
 

@@ -1,4 +1,4 @@
-import { Matrix, Vector, dot } from "./Matrix";
+import { Matrix, Vector } from "./Matrix";
 
 export class Quaternion {
     constructor(public elements: number[]) {
@@ -127,7 +127,7 @@ export function RotationMatrixToQuaternion(m: Matrix) {
 
 export function UnitVectorsToQuaternion(vFrom: Vector, vTo: Vector) {
     let ret = new Quaternion([0, 0, 0, 0]);
-    let r = dot(vFrom,vTo) + 1;
+    let r = Vector.dot(vFrom, vTo) + 1;
     if (r < Number.EPSILON) {
         // vFrom and vTo point in opposite directions
         r = 0;

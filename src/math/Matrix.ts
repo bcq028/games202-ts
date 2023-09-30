@@ -13,20 +13,128 @@ export class Matrix {
     static make_identity() {
         return new Matrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
     }
+    static make_rotation(axis: Vector, angle: number) {
+        const ret = Matrix.fromNumber(16);
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        const t = 1 - c;
+        const x = axis.elements[0], y = axis.elements[1], z = axis.elements[2];
+        const tx = t * x, ty = t * y;
+
+        ret.set(
+
+            tx * x + c, tx * y - s * z, tx * z + s * y, 0,
+            tx * y + s * z, ty * y + c, ty * z - s * x, 0,
+            tx * z - s * y, ty * z + s * x, t * z * z + c, 0,
+            0, 0, 0, 1
+
+        );
+
+        return ret;
+    }
+    public set(n11: number, n12: number, n13: number, n14: number, n21: number, n22: number, n23: number, n24: number, n31: number, n32: number, n33: number, n34: number, n41: number, n42: number, n43: number, n44: number) {
+        const te = this.elements;
+        te[0] = n11; te[4] = n12; te[8] = n13; te[12] = n14;
+        te[1] = n21; te[5] = n22; te[9] = n23; te[13] = n24;
+        te[2] = n31; te[6] = n32; te[10] = n33; te[14] = n34;
+        te[3] = n41; te[7] = n42; te[11] = n43; te[15] = n44;
+        return this;
+    }
 }
 
 export class Vector {
     constructor(public elements: number[]) {
     }
+    static from(x: number, y: number, z: number) {
+        return new Vector([x, y, z]);
+    }
+    static make_zero() {
+        return new Vector([0, 0, 0]);
+    }
+    static add(u: Vector, v: Vector) {
+        let ret = new Vector(structuredClone(v.elements));
+        for (let i = 0; i < v.elements.length; ++i) {
+            ret.elements[i] += u.elements[i];
+        }
+        return ret;
+    }
+
+    static sub(u: Vector, v: Vector) {
+        let ret = new Vector(structuredClone(v.elements));
+        for (let i = 0; i < v.elements.length; ++i) {
+            ret.elements[i] = -ret.elements[i];
+        }
+        return Vector.add(u, ret);
+    }
+    static cross(u: Vector, v: Vector) {
+        if (u.elements.length !== 3 || v.elements.length !== 3) {
+            throw new Error('Cross product is defined for 3D vectors only.');
+        }
+
+        const u1 = u.elements[0];
+        const u2 = u.elements[1];
+        const u3 = u.elements[2];
+
+        const v1 = v.elements[0];
+        const v2 = v.elements[1];
+        const v3 = v.elements[2];
+
+        const w1 = u2 * v3 - u3 * v2;
+        const w2 = u3 * v1 - u1 * v3;
+        const w3 = u1 * v2 - u2 * v1;
+
+        return new Vector([w1, w2, w3]);
+    }
+
+    static dot(u: Vector, v: Vector) {
+        let ret = 0;
+        for (let i = 0; i < u.elements.length; ++i) {
+            ret += u.elements[i] * v.elements[i];
+        }
+        return ret;
+    }
+
+    public neg() {
+        for (let i = 0; i < this.elements.length; ++i) {
+            this.elements[i] = -this.elements[i];
+        }
+        return this;
+    }
+    public scalar(scalar: number) {
+        for (let i = 0; i < this.elements.length; ++i) {
+            this.elements[i] *= scalar;
+        }
+        return this
+    }
+
+    public length() {
+        return Math.sqrt(this.elements.map(p => p * p).reduce((p, c) => p + c, 0));
+    }
+
+    public normalize() {
+        const len = length(this);
+        for (let i = 0; i < this.elements.length; ++i) {
+            this.elements[i] /= len;
+        }
+        return this;
+    }
+
+    public applyMatrix(m: Matrix) {
+
+        const x = this.elements[0], y = this.elements[1], z = this.elements[2];
+        const e = m.elements;
+
+        const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15]);
+
+        this.elements[0] = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w;
+        this.elements[1] = (e[1] * x + e[5] * y + e[9] * z + e[13]) * w;
+        this.elements[2] = (e[2] * x + e[6] * y + e[10] * z + e[14]) * w;
+
+        return this;
+
+    }
 }
 
-export function dot(u: Vector, v: Vector) {
-    let ret = 0;
-    for (let i = 0; i < u.elements.length; ++i) {
-        ret += u.elements[i] * v.elements[i];
-    }
-    return ret;
-}
 
 export function scalarProduct(scalar: number, v: Vector) {
     let ret = new Vector(structuredClone(v.elements));
@@ -40,7 +148,7 @@ export function scalarProduct(scalar: number, v: Vector) {
  * project_u(v) : project vector v onto vector u
  */
 export function projection(u: Vector, v: Vector) {
-    return scalarProduct(dot(u, v) / dot(u, u), u);
+    return scalarProduct(Vector.dot(u, v) / Vector.dot(u, u), u);
 }
 
 export function add(u: Vector, v: Vector) {
@@ -170,3 +278,14 @@ export function multiply(a: Matrix, b: Matrix) {
     return new Matrix(te);
 }
 
+/**
+ * we just need to move target to origin point, rotate up to y and eye to -z
+ */
+export function lookAt(eye: Vector, target: Vector, up: Vector) {
+    const z = Vector.sub(eye, target);
+    z.normalize();
+    const x = Vector.cross(up, z);
+    x.normalize();
+    const y = Vector.cross(z, x);
+    return new Matrix([...x.elements, 0, ...y.elements, 0, ...z.elements, 0, 1]);
+}
