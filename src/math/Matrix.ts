@@ -10,8 +10,8 @@ export class Matrix {
         const elements = new Array(num).fill(0)
         return new Matrix(elements)
     }
-    static make_identity(){
-        return new Matrix([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1])
+    static make_identity() {
+        return new Matrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
     }
 }
 
@@ -126,6 +126,10 @@ export function make_rotation_from_euler(euler: Vector) {
 
 export function make_translation(t: Vector) {
     return new Matrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, t.elements[0], t.elements[1], t.elements[2], 1])
+}
+
+export function make_scale(t: Vector) {
+    return new Matrix([t.elements[0], 0, 0, 0, 0, t.elements[1], 0, 0, 0, 0, t.elements[2], 0, 0, 0, 0, 1]);
 }
 
 export function multiply(a: Matrix, b: Matrix) {

@@ -13,6 +13,7 @@ export class Scene {
     public rhiBatchedEntities: Map<RHIMaterial, RHIMesh[]> = new Map();
     public RhiMaterial2Material: Map<RHIMaterial, Material> = new Map();
     public RhiMesh2Mesh: Map<RHIMesh, Mesh> = new Map();
+    public RhiMesh2Entity: Map<RHIMesh, Entity> = new Map();
     public camera: THREE.Camera
     public cameraControls: OrbitControls
     private gl: WebGLRenderingContext
@@ -30,6 +31,7 @@ export class Scene {
         const rhiMaterial = createWebGLMaterial(this.gl, entity.material);
         this.RhiMaterial2Material.set(rhiMaterial, entity.material);
         this.RhiMesh2Mesh.set(rhiMesh, entity.mesh);
+        this.RhiMesh2Entity.set(rhiMesh,entity);
         let entry = this.rhiBatchedEntities.get(rhiMaterial) || [];
         entry.push(rhiMesh);
         this.rhiBatchedEntities.set(rhiMaterial, entry);

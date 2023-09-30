@@ -63,7 +63,7 @@ export class RenderPipeline {
 
         for (let l = 0; l < scene.lights.length; l++) {
             const camera_renderpass = new CameraRenderPass(gl);
-            camera_renderpass.draw_forward(scene, this.guiParams, lightPos);
+            camera_renderpass.draw_forward(scene, lightPos);
         }
 
     }

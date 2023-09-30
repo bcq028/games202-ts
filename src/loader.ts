@@ -4,7 +4,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Mesh } from "./Mesh";
 import { PhongMaterial, EmissiveMaterial } from "./Material";
 import { Scene } from "./Scene";
-import { Entity } from "./Entity";
+import { Entity, RenderObject } from "./Entity";
 
 function loadShader(filename: string) {
   return new Promise<string>((res, rej) => {
@@ -22,7 +22,7 @@ function loadShader(filename: string) {
 export async function loadOBJ(scene: Scene, path: string, name: string) {
 
   const manager = new THREE.LoadingManager();
-  return new Promise<Entity>((res, _) => {
+  return new Promise<RenderObject>((res, _) => {
     new MTLLoader(manager)
       .setPath(path)
       .load(name + '.mtl', materials => {
@@ -31,6 +31,7 @@ export async function loadOBJ(scene: Scene, path: string, name: string) {
           .setMaterials(materials)
           .setPath(path)
           .load(name + '.obj', (object) => {
+            const renderObject=new RenderObject();
             object.traverse(child => {
               if (child instanceof THREE.Mesh) {
                 let geo = child.geometry;
@@ -49,9 +50,11 @@ export async function loadOBJ(scene: Scene, path: string, name: string) {
                 let material = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
                   (scene.lights[0].material as EmissiveMaterial).intensity);
                 const entity = new Entity(mesh, material);
+                renderObject.entities.push(entity);
                 scene.addEntity(entity);
               }
             });
+            res(renderObject)
           }, (err) => {
             console.log(err)
           });

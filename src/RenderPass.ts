@@ -1,18 +1,6 @@
 import { mat4 } from "gl-matrix"
-import { TRSTransform } from "./RenderPipeline"
 import { createTexture } from "./RHIData"
 import { Scene } from "./Scene"
-
-interface GUIParams {
-    modelTransX: number;
-    modelTransY: number;
-    modelTransZ: number;
-    modelScaleX: number;
-    modelScaleY: number;
-    modelScaleZ: number;
-}
-
-
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -50,16 +38,13 @@ export class CameraRenderPass {
         }
     }
 
-    draw_forward(scene: Scene, guiParams: GUIParams, lightPos: [number, number, number]) {
+    draw_forward(scene: Scene, lightPos: [number, number, number]) {
 
         //TODO:clarify how to reorganize these swap data
         scene.camera.updateMatrixWorld();
         let ModelMatrix = mat4.create();
         let ViewMatrix = mat4.create();
         let projectionMatrix = mat4.create();
-        const modelTranslation = [guiParams.modelTransX, guiParams.modelTransY, guiParams.modelTransZ] as [number, number, number];
-        const modelScale = [guiParams.modelScaleX, guiParams.modelScaleY, guiParams.modelScaleZ] as [number, number, number];
-        let transform = new TRSTransform(modelTranslation, modelScale);
         mat4.invert(ViewMatrix, scene.camera.matrixWorld.elements as [
             number, number, number, number,
             number, number, number, number,
@@ -68,16 +53,8 @@ export class CameraRenderPass {
         ]);
         let dynamicLightMatrix = structuredClone(ModelMatrix);
         mat4.translate(dynamicLightMatrix, dynamicLightMatrix, lightPos);
-
-        mat4.translate(ModelMatrix, ModelMatrix, transform.translate);
-        mat4.scale(ModelMatrix, ModelMatrix, transform.scale);
-
         let scaledMatrix = structuredClone(ModelMatrix);
-        let t = structuredClone(transform.scale);
-        for (let i = 0; i < t.length; ++i) {
-            t[i] = 1 / t[i];
-        }
-        mat4.scale(ModelMatrix, scaledMatrix, t);
+    
         mat4.copy(projectionMatrix, scene.camera.projectionMatrix.elements as unknown as [
             number, number, number, number,
             number, number, number, number,
@@ -93,38 +70,37 @@ export class CameraRenderPass {
             }
             this.setShaderLocations(material.shaderProgram, Object.keys(scene.RhiMaterial2Material.get(material).uniforms), Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
             this.gl.useProgram(material.shaderProgram);
-      
+
             scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
-            scene.RhiMaterial2Material.get(material).uniforms['uModelMatrix'].value = ModelMatrix;
             scene.RhiMaterial2Material.get(material).uniforms['uViewMatrix'].value = ViewMatrix;
             scene.RhiMaterial2Material.get(material).uniforms['uCameraPos'].value = [scene.camera.position.x, scene.camera.position.y, scene.camera.position.z];
-            scene.RhiMaterial2Material.get(material).uniforms['uLightPos'].value =lightPos;
-            
-            for (let k in scene.RhiMaterial2Material.get(material).uniforms) {
-                if (scene.RhiMaterial2Material.get(material).uniforms[k].type == 'matrix4fv') {
-                    this.gl.uniformMatrix4fv(
-                        this.uniformLocation[k],
-                        false,
-                        scene.RhiMaterial2Material.get(material).uniforms[k].value);
-                } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == '3fv') {
-                    this.gl.uniform3fv(
-                        this.uniformLocation[k],
-                        scene.RhiMaterial2Material.get(material).uniforms[k].value);
-                } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == '1f') {
-                    this.gl.uniform1f(
-                        this.uniformLocation[k],
-                        scene.RhiMaterial2Material.get(material).uniforms[k].value);
-                } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == '1i') {
-                    this.gl.uniform1i(
-                        this.uniformLocation[k],
-                        scene.RhiMaterial2Material.get(material).uniforms[k].value);
-                } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == 'texture') {
-                    this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, createTexture(this.gl, scene.RhiMaterial2Material.get(material).uniforms[k].value));
-                    this.gl.uniform1i(this.uniformLocation[k], 0);
-                }
-            }
+            scene.RhiMaterial2Material.get(material).uniforms['uLightPos'].value = lightPos;
             for (let mesh of meshes) {
+                scene.RhiMaterial2Material.get(material).uniforms['uModelMatrix'].value = scene.RhiMesh2Entity.get(mesh).transform.elements;
+                for (let k in scene.RhiMaterial2Material.get(material).uniforms) {
+                    if (scene.RhiMaterial2Material.get(material).uniforms[k].type == 'matrix4fv') {
+                        this.gl.uniformMatrix4fv(
+                            this.uniformLocation[k],
+                            false,
+                            scene.RhiMaterial2Material.get(material).uniforms[k].value);
+                    } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == '3fv') {
+                        this.gl.uniform3fv(
+                            this.uniformLocation[k],
+                            scene.RhiMaterial2Material.get(material).uniforms[k].value);
+                    } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == '1f') {
+                        this.gl.uniform1f(
+                            this.uniformLocation[k],
+                            scene.RhiMaterial2Material.get(material).uniforms[k].value);
+                    } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == '1i') {
+                        this.gl.uniform1i(
+                            this.uniformLocation[k],
+                            scene.RhiMaterial2Material.get(material).uniforms[k].value);
+                    } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == 'texture') {
+                        this.gl.activeTexture(this.gl.TEXTURE0);
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, createTexture(this.gl, scene.RhiMaterial2Material.get(material).uniforms[k].value));
+                        this.gl.uniform1i(this.uniformLocation[k], 0);
+                    }
+                }
                 if (mesh.vertexBuffer) {
                     const numComponents = 3;
                     const type = this.gl.FLOAT;
