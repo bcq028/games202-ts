@@ -1,16 +1,6 @@
 import { mat4 } from "gl-matrix"
 import { Scene } from "./Scene"
 
-export function reset_gl(gl: WebGLRenderingContext) {
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
-    gl.clearDepth(1.0); // Clear everything
-    gl.enable(gl.DEPTH_TEST); // Enable depth testing
-    gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-}
 
 
 export class CameraRenderPass {
@@ -158,35 +148,6 @@ export class CameraRenderPass {
                 this.gl.drawElements(this.gl.TRIANGLES, vertexCount, type, offset);
             }
         }
-    }
-}
-
-export class ShadowRenderPass {
-    uniformLocation: Record<string, WebGLUniformLocation> = {}
-    attributeLayout: Record<string, number> = {}
-    constructor(private gl: WebGLRenderingContext) {
-
-    }
-
-    setShaderLocations(shaderProgram: WebGLProgram, uniforms: string[], attribs: string[]) {
-        if (uniforms.length) {
-            for (let i = 0; i < uniforms.length; ++i) {
-                Object.assign(this.uniformLocation, {
-                    [uniforms[i]]: this.gl.getUniformLocation(shaderProgram, uniforms[i]),
-                });
-            }
-        }
-        if (attribs.length) {
-            for (let i = 0; i < attribs.length; ++i) {
-                Object.assign(this.attributeLayout, {
-                    [attribs[i]]: this.gl.getAttribLocation(shaderProgram, attribs[i]),
-                });
-            }
-        }
-    }
-
-    draw_forward(scene: Scene, lightPos: [number, number, number]) {
-     
     }
 }
 

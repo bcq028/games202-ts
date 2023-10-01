@@ -13,28 +13,54 @@ varying highp vec2 vTextureCoord;
 varying highp vec3 vFragPos;
 varying highp vec3 vNormal;
 
-void main(void) {
-  vec3 color;
-  if (uTextureSample == 1) {
-    color = pow(texture2D(uSampler, vTextureCoord).rgb, vec3(2.2));
-  } else {
-    color = uKd;
-  }
-  
+#define EPS 1e-3
+
+
+vec3 blinnPhong() {
+  vec3 color = texture2D(uSampler, vTextureCoord).rgb;
+  color = pow(color, vec3(2.2));
+
   vec3 ambient = 0.05 * color;
 
-  vec3 lightDir = normalize(uLightPos - vFragPos);
+  vec3 lightDir = normalize(uLightPos);
   vec3 normal = normalize(vNormal);
   float diff = max(dot(lightDir, normal), 0.0);
-  float light_atten_coff = uLightIntensity / length(uLightPos - vFragPos);
-  vec3 diffuse =  diff * light_atten_coff * color;
+  vec3 light_atten_coff =
+      uLightIntensity / pow(length(uLightPos - vFragPos), 2.0);
+  vec3 diffuse = diff * light_atten_coff * color;
 
   vec3 viewDir = normalize(uCameraPos - vFragPos);
-  float spec = 0.0;
-  vec3 reflectDir = reflect(-lightDir, normal);
-  spec = pow (max(dot(viewDir, reflectDir), 0.0), 35.0);
-  vec3 specular = uKs * light_atten_coff * spec;  
-  
-  gl_FragColor = vec4(pow((ambient + diffuse + specular), vec3(1.0/2.2)), 1.0);
+  vec3 halfDir = normalize((lightDir + viewDir));
+  float spec = pow(max(dot(halfDir, normal), 0.0), 32.0);
+  vec3 specular = uKs * light_atten_coff * spec;
 
+  vec3 radiance = (ambient + diffuse + specular);
+  vec3 phongColor = pow(radiance, vec3(1.0 / 2.2));
+  return phongColor;
+}
+
+float useShadowMap(sampler2D shadowMap, vec4 shadowCoord){
+  vec4 depthpack =texture2D(shadowMap,shadowCoord.xy);
+  float depthUnpack =unpack(depthpack);
+  if(depthUnpack > shadowCoord.z)
+      return 1.0;
+  return 0.0;
+}
+
+float unpack(vec4 rgbaDepth) {
+    const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+    float depth =dot(rgbaDepth, bitShift) ;
+    if(abs(depth)<EPS){
+      depth=1.0;
+    }
+    return  depth;
+}
+
+void main(void) {
+  float visibility;
+  vec3 projCoords = vPositionFromLight.xyz / vPositionFromLight.w;
+  vec3 shadowCoord = projCoords * 0.5 + 0.5;
+  visibility = useShadowMap(uShadowMap, vec4(shadowCoord, 1.0));
+  vec3 phongColor = blinnPhong();
+  gl_FragColor = vec4(phongColor * visibility, 1.0);
 }

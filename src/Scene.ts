@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Entity } from "./Entity";
+import { RenderMeshNode } from "./Entity";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RHIFrameBuffer, RHIMaterial, RHIMesh, createFBO, createWebGLMaterial, createWebGLMesh } from './RHIData';
 import { Material } from './Material';
@@ -8,13 +8,13 @@ import { Mesh } from './Mesh';
 const cameraPosition = [-20, 180, 250];
 
 export class Scene {
-    public entities: Entity[] = []
-    public lights: Entity[] = []
+    public entities: RenderMeshNode[] = []
+    public lights: RenderMeshNode[] = []
     public rhiBatchedEntities: Map<RHIMaterial, RHIMesh[]> = new Map();
     public RhiMaterial2Material: Map<RHIMaterial, Material> = new Map();
     public RhiMesh2Mesh: Map<RHIMesh, Mesh> = new Map();
-    public RhiMesh2Entity: Map<RHIMesh, Entity> = new Map();
-    public lightFboMap: Map<Entity, RHIFrameBuffer> = new Map();
+    public RhiMesh2Entity: Map<RHIMesh, RenderMeshNode> = new Map();
+    public lightFboMap: Map<RenderMeshNode, RHIFrameBuffer> = new Map();
     public camera: THREE.Camera
     public cameraControls: OrbitControls
     private gl: WebGLRenderingContext
@@ -26,7 +26,7 @@ export class Scene {
     }
 
 
-    public addEntity(entity: Entity) {
+    public addEntity(entity: RenderMeshNode) {
         this.entities.push(entity);
         const rhiMesh = createWebGLMesh(this.gl, entity.mesh);
         const rhiMaterial = createWebGLMaterial(this.gl, entity.material);
@@ -37,7 +37,7 @@ export class Scene {
         entry.push(rhiMesh);
         this.rhiBatchedEntities.set(rhiMaterial, entry);
     }
-    public addLight(light: Entity) {
+    public addLight(light: RenderMeshNode) {
         this.lights.push(light);
         this.addEntity(light);
         this.lightFboMap.set(light,createFBO(this.gl));

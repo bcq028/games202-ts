@@ -1,6 +1,18 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { CameraRenderPass, ShadowRenderPass, reset_gl } from "./RenderPass";
+import { CameraRenderPass } from "./RenderPass";
+
+
+function reset_gl(gl: WebGLRenderingContext) {
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
+    gl.clearDepth(1.0); // Clear everything
+    gl.enable(gl.DEPTH_TEST); // Enable depth testing
+    gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
 
 interface GUIParams {
     modelTransX: number;
@@ -62,11 +74,11 @@ export class RenderPipeline {
         lightPos = [0, 100, 200];
 
         const camera_renderpass = new CameraRenderPass(gl);
-        const shadow_renderpass = new ShadowRenderPass(gl);
+        // const shadow_renderpass = new ShadowRenderPass(gl);
 
-        for (let l = 0; l < scene.lights.length; l++) {
-            shadow_renderpass.draw_forward(scene, lightPos);
-        }
+        // for (let l = 0; l < scene.lights.length; l++) {
+        //     shadow_renderpass.draw_forward(scene, lightPos);
+        // }
         for (let l = 0; l < scene.lights.length; l++) {
             camera_renderpass.draw_forward(scene, lightPos);
         }
