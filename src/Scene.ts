@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Entity } from "./Entity";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { RHIMaterial, RHIMesh, createWebGLMaterial, createWebGLMesh } from './RHIData';
+import { RHIFrameBuffer, RHIMaterial, RHIMesh, createFBO, createWebGLMaterial, createWebGLMesh } from './RHIData';
 import { Material } from './Material';
 import { Mesh } from './Mesh';
 
@@ -14,6 +14,7 @@ export class Scene {
     public RhiMaterial2Material: Map<RHIMaterial, Material> = new Map();
     public RhiMesh2Mesh: Map<RHIMesh, Mesh> = new Map();
     public RhiMesh2Entity: Map<RHIMesh, Entity> = new Map();
+    public lightFboMap: Map<Entity, RHIFrameBuffer> = new Map();
     public camera: THREE.Camera
     public cameraControls: OrbitControls
     private gl: WebGLRenderingContext
@@ -39,6 +40,7 @@ export class Scene {
     public addLight(light: Entity) {
         this.lights.push(light);
         this.addEntity(light);
+        this.lightFboMap.set(light,createFBO(this.gl));
     }
 
     public camera_init(canvas: HTMLCanvasElement) {

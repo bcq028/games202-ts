@@ -160,3 +160,33 @@ export class CameraRenderPass {
         }
     }
 }
+
+export class ShadowRenderPass {
+    uniformLocation: Record<string, WebGLUniformLocation> = {}
+    attributeLayout: Record<string, number> = {}
+    constructor(private gl: WebGLRenderingContext) {
+
+    }
+
+    setShaderLocations(shaderProgram: WebGLProgram, uniforms: string[], attribs: string[]) {
+        if (uniforms.length) {
+            for (let i = 0; i < uniforms.length; ++i) {
+                Object.assign(this.uniformLocation, {
+                    [uniforms[i]]: this.gl.getUniformLocation(shaderProgram, uniforms[i]),
+                });
+            }
+        }
+        if (attribs.length) {
+            for (let i = 0; i < attribs.length; ++i) {
+                Object.assign(this.attributeLayout, {
+                    [attribs[i]]: this.gl.getAttribLocation(shaderProgram, attribs[i]),
+                });
+            }
+        }
+    }
+
+    draw_forward(scene: Scene, lightPos: [number, number, number]) {
+     
+    }
+}
+

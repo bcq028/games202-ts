@@ -18,6 +18,10 @@ export interface RHIEntity {
     material: RHIMaterial
 }
 
+export interface RHIFrameBuffer {
+    frameBuffer: WebGLFramebuffer
+}
+
 export function createWebGLMesh(gl: WebGLRenderingContext, mesh: Mesh) {
     let ret: RHIMesh = {
         indicesBuffer: gl.createBuffer()
@@ -77,7 +81,7 @@ export function createWebGLMaterial(gl: WebGLRenderingContext, material: Materia
     return ret
 }
 
-export function createTexture(gl: WebGLRenderingContext, img: HTMLImageElement) {
+function createTexture(gl: WebGLRenderingContext, img: HTMLImageElement) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -122,6 +126,36 @@ export function createTexture(gl: WebGLRenderingContext, img: HTMLImageElement) 
     gl.bindTexture(gl.TEXTURE_2D, null);
     return texture;
 }
+
+export function createFBO(gl: WebGLRenderingContext): RHIFrameBuffer {
+    const resolution = 2048;
+    const frameBuffer = gl.createFramebuffer();
+    const texture = gl.createTexture();
+    const numBytes = resolution * resolution * 4;
+    const pixelData = new Uint8Array(numBytes);
+    for (let i = 0; i < numBytes; ++i) {
+        pixelData[i] = 255;
+    }
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, resolution, resolution, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    const depthBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, resolution, resolution);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.bindTexture(gl.TEXTURE_2D,null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER,null);
+
+    return { frameBuffer };
+}
+
 
 function isPowerOf2(value: number) {
     return (value & (value - 1)) == 0;

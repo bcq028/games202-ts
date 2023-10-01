@@ -1,6 +1,6 @@
 import dat from "dat.gui";
 import { Scene } from "./Scene";
-import { CameraRenderPass, reset_gl } from "./RenderPass";
+import { CameraRenderPass, ShadowRenderPass, reset_gl } from "./RenderPass";
 
 interface GUIParams {
     modelTransX: number;
@@ -59,12 +59,16 @@ export class RenderPipeline {
         Math.cos(timer * 4) * 150,
         Math.cos(timer * 2) * 100] as [number, number, number];
 
-        lightPos=[0,100,200];
+        lightPos = [0, 100, 200];
+
+        const camera_renderpass = new CameraRenderPass(gl);
+        const shadow_renderpass = new ShadowRenderPass(gl);
 
         for (let l = 0; l < scene.lights.length; l++) {
-            const camera_renderpass = new CameraRenderPass(gl);
+            shadow_renderpass.draw_forward(scene, lightPos);
+        }
+        for (let l = 0; l < scene.lights.length; l++) {
             camera_renderpass.draw_forward(scene, lightPos);
         }
-
     }
 }
