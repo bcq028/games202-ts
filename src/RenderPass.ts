@@ -1,5 +1,4 @@
 import { mat4 } from "gl-matrix"
-import { createTexture } from "./RHIData"
 import { Scene } from "./Scene"
 
 export function reset_gl(gl: WebGLRenderingContext) {
@@ -97,7 +96,7 @@ export class CameraRenderPass {
                             scene.RhiMaterial2Material.get(material).uniforms[k].value);
                     } else if (scene.RhiMaterial2Material.get(material).uniforms[k].type == 'texture') {
                         this.gl.activeTexture(this.gl.TEXTURE0);
-                        this.gl.bindTexture(this.gl.TEXTURE_2D, createTexture(this.gl, scene.RhiMaterial2Material.get(material).uniforms[k].value));
+                        this.gl.bindTexture(this.gl.TEXTURE_2D, material.textures[0]);
                         this.gl.uniform1i(this.uniformLocation[k], 0);
                     }
                 }
