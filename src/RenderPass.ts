@@ -42,6 +42,7 @@ export class CameraRenderPass {
     draw_forward(scene: Scene, lightPos: [number, number, number]) {
 
         //TODO:clarify how to reorganize these swap data
+        this.gl.viewport(0.0, 0.0, window.screen.width, window.screen.height);
         scene.camera.updateMatrixWorld();
         let ModelMatrix = mat4.create();
         let ViewMatrix = mat4.create();
@@ -212,8 +213,10 @@ export class ShadowRenderPass {
     }
 
     draw_forward(scene: Scene, lightPos: [number, number, number]) {
-		let textureNum = 0;
-
+        let textureNum = 0;
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, scene.lightFboMap.get(scene.lights[0]).frameBuffer)
+        const resolution = 2048;
+        this.gl.viewport(0.0, 0.0, resolution, resolution);
         //TODO:clarify how to reorganize these swap data
         scene.camera.updateMatrixWorld();
         let ModelMatrix = mat4.create();
@@ -258,10 +261,10 @@ export class ShadowRenderPass {
                 if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'matrix4fv') {
                     this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
                 } else if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'texture') {
-                    this.gl.activeTexture(this.gl.TEXTURE0+textureNum);
+                    this.gl.activeTexture(this.gl.TEXTURE0 + textureNum);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, renderResource.shadowStorageBufferObject.uShadowMap.value);
                     this.gl.uniform1i(this.uniformLocation[shadowUniform], textureNum);
-                    textureNum+=1;
+                    textureNum += 1;
                 }
             }
 
