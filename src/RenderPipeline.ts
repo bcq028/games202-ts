@@ -49,7 +49,7 @@ export class RenderPipeline {
         panelModelTrans.open();
         panelModelScale.open();
     }
-    render_forward(gl: WebGLRenderingContext, scene: Scene) {
+    async render_forward(gl: WebGLRenderingContext, scene: Scene) {
 
         reset_gl(gl)
 
@@ -61,14 +61,14 @@ export class RenderPipeline {
 
         lightPos = [0, 100, 200];
 
+        const shadow_renderpass=new ShadowRenderPass(gl);
         const camera_renderpass = new CameraRenderPass(gl);
-        const shadow_renderpass = new ShadowRenderPass(gl);
 
+        await shadow_renderpass.setup();
         for (let l = 0; l < scene.lights.length; l++) {
             shadow_renderpass.draw_forward(scene, lightPos);
-        }
-        for (let l = 0; l < scene.lights.length; l++) {
             camera_renderpass.draw_forward(scene, lightPos);
         }
+     
     }
 }

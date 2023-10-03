@@ -7,8 +7,58 @@ import { Mesh } from './Mesh';
 
 const cameraPosition = [-20, 180, 250];
 
+
+export interface PhongStorageBufferObject {
+    uModelMatrix: { type: 'matrix4fv', value: any },
+    uViewMatrix: { type: 'matrix4fv', value: any },
+    uCameraPos: { type: '3fv', value: any },
+    uLightPos: { type: '3fv', value: any },
+    uProjectionMatrix: { type: 'matrix4fv', value: any },
+    uTextureSample: { type: '1i', value: any },
+    uSampler: { type: 'texture', value: any },
+    uKd: { type: '3fv', value: any },
+    uKs: { type: '3fv', value: any },
+    uLightIntensity: { type: '1f', value: any }
+}
+
+export interface ShadowStorageBufferObject {
+    uLightMVP: { type: 'matrix4fv', value: any },
+    uShadowMap: { type: 'texture', value: any }
+}
+
+export class RenderResource {
+    rhiMeshes: Map<Entity, RHIMesh> = new Map()
+    rhiMaterials: Map<Entity, RHIMaterial> = new Map()
+    phongStorageBufferObject: PhongStorageBufferObject
+    shadowStorageBufferObject: ShadowStorageBufferObject
+    constructor() {
+        this.phongStorageBufferObject = {
+            uModelMatrix: { type: 'matrix4fv', value: undefined },
+            uViewMatrix: { type: 'matrix4fv', value: undefined },
+            uCameraPos: { type: '3fv', value: undefined },
+            uLightPos: { type: '3fv', value: undefined },
+            uProjectionMatrix: { type: 'matrix4fv', value: undefined },
+            uTextureSample: { type: '1i', value: undefined },
+            uSampler: { type: 'texture', value: undefined },
+            uKd: { type: '3fv', value: undefined },
+            uKs: { type: '3fv', value: undefined },
+            uLightIntensity: { type: '1f', value: undefined }
+        }
+        this.shadowStorageBufferObject = {
+            uLightMVP: { type: 'matrix4fv', value: undefined },
+            uShadowMap: { type: 'texture', value: undefined }
+        }
+    }
+    updatePerFrameBuffer(scene:Scene){
+        this.shadowStorageBufferObject.uLightMVP.value=scene.lights[0].transform;
+        this.shadowStorageBufferObject.uShadowMap.value=scene.lightFboMap.get(scene.lights[0]);
+    }
+}
+
+export const renderResource = new RenderResource()
+
 export class Scene {
-    public entities: Entity[] = []
+    public entities: Entity[] = [];
     public lights: Entity[] = []
     public rhiBatchedEntities: Map<RHIMaterial, RHIMesh[]> = new Map();
     public RhiMaterial2Material: Map<RHIMaterial, Material> = new Map();
@@ -30,9 +80,11 @@ export class Scene {
         this.entities.push(entity);
         const rhiMesh = createWebGLMesh(this.gl, entity.mesh);
         const rhiMaterial = createWebGLMaterial(this.gl, entity.material);
+        renderResource.rhiMeshes.set(entity, rhiMesh);
+        renderResource.rhiMaterials.set(entity, rhiMaterial);
         this.RhiMaterial2Material.set(rhiMaterial, entity.material);
         this.RhiMesh2Mesh.set(rhiMesh, entity.mesh);
-        this.RhiMesh2Entity.set(rhiMesh,entity);
+        this.RhiMesh2Entity.set(rhiMesh, entity);
         let entry = this.rhiBatchedEntities.get(rhiMaterial) || [];
         entry.push(rhiMesh);
         this.rhiBatchedEntities.set(rhiMaterial, entry);
@@ -40,7 +92,7 @@ export class Scene {
     public addLight(light: Entity) {
         this.lights.push(light);
         this.addEntity(light);
-        this.lightFboMap.set(light,createFBO(this.gl));
+        this.lightFboMap.set(light, createFBO(this.gl));
     }
 
     public camera_init(canvas: HTMLCanvasElement) {

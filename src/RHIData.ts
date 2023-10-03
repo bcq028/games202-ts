@@ -81,7 +81,31 @@ export function createWebGLMaterial(gl: WebGLRenderingContext, material: Materia
     return ret
 }
 
-function createTexture(gl: WebGLRenderingContext, img: HTMLImageElement) {
+export function set_shader(gl: WebGLRenderingContext, vsSrc: string, fsSrc: string) {
+    const compileShader = (shaderSource: string, shaderType: number) => {
+        const shader = gl.createShader(shaderType)!;
+        gl.shaderSource(shader, shaderSource);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error("shader compiler error");
+        }
+        return shader;
+    }
+
+    let ret = gl.createProgram();
+    const vs = compileShader(vsSrc, gl.VERTEX_SHADER);
+    const fs = compileShader(fsSrc, gl.FRAGMENT_SHADER);
+    gl.attachShader(ret, vs);
+    gl.attachShader(ret, fs);
+    gl.linkProgram(ret);
+
+    if (!gl.getProgramParameter(ret, gl.LINK_STATUS)) {
+        alert('shader linker error:\n' + gl.getProgramInfoLog(ret));
+    }
+    return ret
+}
+
+function createTexture(gl: WebGLRenderingContext, img: ImageData) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -149,9 +173,9 @@ export function createFBO(gl: WebGLRenderingContext): RHIFrameBuffer {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-    gl.bindTexture(gl.TEXTURE_2D,null);
-    gl.bindRenderbuffer(gl.RENDERBUFFER,null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
     return { frameBuffer };
 }

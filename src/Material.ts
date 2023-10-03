@@ -17,7 +17,7 @@ export class Material {
 }
 
 export class PhongMaterial extends Material {
-  constructor(color: number[], colorMap: HTMLImageElement, specular: number[], intensity: number) {
+  constructor(color: number[], colorMap: ImageData, specular: number[], intensity: number) {
     let textureSample = 0;
 
     if (colorMap != null) {
@@ -48,7 +48,6 @@ export class PhongMaterial extends Material {
         'uLightIntensity': { type: '1f', value: intensity }
       }, PhongVertexShader, PhongFragmentShader);
     }
-
   }
 }
 

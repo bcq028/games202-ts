@@ -3,10 +3,10 @@ import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { Mesh } from "./Mesh";
 import { PhongMaterial, EmissiveMaterial } from "./Material";
-import { Scene } from "./Scene";
+import { RenderResource, Scene } from "./Scene";
 import { Entity, RenderObject } from "./Entity";
 
-function loadShader(filename: string) {
+export function loadShader(filename: string) {
   return new Promise<string>((res, rej) => {
     try {
       const loader = new THREE.FileLoader;
@@ -19,7 +19,7 @@ function loadShader(filename: string) {
   })
 }
 
-export async function loadOBJ(scene: Scene, path: string, name: string) {
+export async function loadOBJ(scene: Scene, renderResource: RenderResource, path: string, name: string) {
 
   const manager = new THREE.LoadingManager();
   return new Promise<RenderObject>((res, _) => {
@@ -31,11 +31,11 @@ export async function loadOBJ(scene: Scene, path: string, name: string) {
           .setMaterials(materials)
           .setPath(path)
           .load(name + '.obj', (object) => {
-            const renderObject=new RenderObject();
+            const renderObject = new RenderObject();
             object.traverse(child => {
               if (child instanceof THREE.Mesh) {
                 let geo = child.geometry;
-                let mat: { map: { image: HTMLImageElement; }; color: { toArray: () => number[]; }; specular: { toArray: () => number[]; }; };
+                let mat: { map: { image: ImageData; }; color: { toArray: () => number[]; }; specular: { toArray: () => number[]; }; };
                 if (Array.isArray(child.material)) mat = child.material[0];
                 else mat = child.material;
 
@@ -45,8 +45,10 @@ export async function loadOBJ(scene: Scene, path: string, name: string) {
                   { name: 'aTextureCoord', array: geo.attributes.uv.array },
                 );
 
-                let colorMap: HTMLImageElement = null;
+                let colorMap: ImageData = null;
                 if (mat.map != null) colorMap = mat.map.image
+                renderResource.phongStorageBufferObject.uKd.value=mat.color.toArray();
+                
                 let material = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(),
                   (scene.lights[0].material as EmissiveMaterial).intensity);
                 const entity = new Entity(mesh, material);
