@@ -1,7 +1,7 @@
 import { mat4 } from "gl-matrix"
 import { Scene, renderResource } from "./Scene"
 import { RHIMaterial, RHIMesh, set_shader } from "./RHIData";
-import { loadShader } from "./loader";
+import { shadowFragmentShader, shadowVertexShader } from "./loader";
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -83,7 +83,7 @@ export class CameraRenderPass {
             //TODO: consider use phongStorageBufferObject
             for (let shadowUniform in renderResource.shadowStorageBufferObject) {
                 if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'matrix4fv') {
-                    this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject[shadowUniform].value);
+                    this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
                 } else if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'texture') {
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, renderResource.shadowStorageBufferObject.uShadowMap.value);
@@ -188,9 +188,9 @@ export class ShadowRenderPass {
     constructor(private gl: WebGLRenderingContext) {
     }
 
-    async setup() {
-        const vertexShader = await loadShader("../shaders/shadowShader/vertex.glsl")
-        const fragmentShader = await loadShader("../shaders/shadowShader/fragment.glsl")
+    setup() {
+        const vertexShader = shadowVertexShader
+        const fragmentShader = shadowFragmentShader
         set_shader(this.gl, vertexShader, fragmentShader);
     }
 
@@ -212,6 +212,7 @@ export class ShadowRenderPass {
     }
 
     draw_forward(scene: Scene, lightPos: [number, number, number]) {
+		let textureNum = 0;
 
         //TODO:clarify how to reorganize these swap data
         scene.camera.updateMatrixWorld();
@@ -255,17 +256,16 @@ export class ShadowRenderPass {
             //TODO: consider use phongStorageBufferObject
             for (let shadowUniform in renderResource.shadowStorageBufferObject) {
                 if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'matrix4fv') {
-                    this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject[shadowUniform].value);
+                    this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
                 } else if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'texture') {
-                    this.gl.activeTexture(this.gl.TEXTURE0);
+                    this.gl.activeTexture(this.gl.TEXTURE0+textureNum);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, renderResource.shadowStorageBufferObject.uShadowMap.value);
-                    this.gl.uniform1i(this.uniformLocation[shadowUniform], 0);
+                    this.gl.uniform1i(this.uniformLocation[shadowUniform], textureNum);
+                    textureNum+=1;
                 }
             }
 
             for (let mesh of meshes) {
-                scene.RhiMaterial2Material.get(material).uniforms['uModelMatrix'].value = scene.RhiMesh2Entity.get(mesh).transform.elements;
-
                 if (mesh.vertexBuffer) {
                     const numComponents = 3;
                     const type = this.gl.FLOAT;

@@ -20,6 +20,7 @@ export interface RHIEntity {
 
 export interface RHIFrameBuffer {
     frameBuffer: WebGLFramebuffer
+    texture:WebGLTexture
 }
 
 export function createWebGLMesh(gl: WebGLRenderingContext, mesh: Mesh) {
@@ -177,7 +178,7 @@ export function createFBO(gl: WebGLRenderingContext): RHIFrameBuffer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
-    return { frameBuffer };
+    return { frameBuffer,texture };
 }
 
 

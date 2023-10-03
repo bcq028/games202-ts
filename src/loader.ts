@@ -70,3 +70,5 @@ export const LightCubeVertexShader = await loadShader("../shaders/lightShader/ve
 export const LightCubeFragmentShader = await loadShader("../shaders/lightShader/fragment.glsl")
 export const PhongVertexShader = await loadShader("../shaders/phongShader/vertex.glsl")
 export const PhongFragmentShader = await loadShader("../shaders/phongShader/fragment.glsl")
+export const shadowVertexShader=await loadShader("../shaders/shadowShader/vertex.glsl")
+export const shadowFragmentShader=await loadShader("../shaders/shadowShader/fragment.glsl")

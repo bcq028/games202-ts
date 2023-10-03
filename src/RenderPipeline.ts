@@ -1,6 +1,7 @@
 import dat from "dat.gui";
-import { Scene } from "./Scene";
+import { Scene, renderResource } from "./Scene";
 import { CameraRenderPass, ShadowRenderPass, reset_gl } from "./RenderPass";
+import { Vector, make_translation, multiply } from "./math/Matrix";
 
 interface GUIParams {
     modelTransX: number;
@@ -49,7 +50,12 @@ export class RenderPipeline {
         panelModelTrans.open();
         panelModelScale.open();
     }
-    async render_forward(gl: WebGLRenderingContext, scene: Scene) {
+
+    updatePerFrameBuffer(scene:Scene){
+        renderResource.updatePerFrameBuffer(scene);
+    }
+
+    render_forward(gl: WebGLRenderingContext, scene: Scene) {
 
         reset_gl(gl)
 
@@ -59,12 +65,14 @@ export class RenderPipeline {
         Math.cos(timer * 4) * 150,
         Math.cos(timer * 2) * 100] as [number, number, number];
 
+        // TODO remove lightPos
         lightPos = [0, 100, 200];
+        scene.lights[0].transform=multiply(make_translation(Vector.from(0,100,200)),scene.lights[0].transform);
 
         const shadow_renderpass=new ShadowRenderPass(gl);
         const camera_renderpass = new CameraRenderPass(gl);
 
-        await shadow_renderpass.setup();
+        shadow_renderpass.setup();
         for (let l = 0; l < scene.lights.length; l++) {
             shadow_renderpass.draw_forward(scene, lightPos);
             camera_renderpass.draw_forward(scene, lightPos);

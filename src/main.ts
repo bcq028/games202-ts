@@ -28,6 +28,7 @@ async function main() {
   const renderPipeline = new RenderPipeline()
 
   function mainLoop() {
+    renderPipeline.updatePerFrameBuffer(scene);
     renderPipeline.render_forward(gl, scene);
     requestAnimationFrame(mainLoop);
   }

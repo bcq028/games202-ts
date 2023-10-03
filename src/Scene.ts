@@ -22,8 +22,8 @@ export interface PhongStorageBufferObject {
 }
 
 export interface ShadowStorageBufferObject {
-    uLightMVP: { type: 'matrix4fv', value: any },
-    uShadowMap: { type: 'texture', value: any }
+    uLightMVP: { type: 'matrix4fv', value: number[] },
+    uShadowMap: { type: 'texture', value: WebGLTexture }
 }
 
 export class RenderResource {
@@ -50,8 +50,8 @@ export class RenderResource {
         }
     }
     updatePerFrameBuffer(scene:Scene){
-        this.shadowStorageBufferObject.uLightMVP.value=scene.lights[0].transform;
-        this.shadowStorageBufferObject.uShadowMap.value=scene.lightFboMap.get(scene.lights[0]);
+        this.shadowStorageBufferObject.uLightMVP.value=scene.lights[0].transform.elements;
+        this.shadowStorageBufferObject.uShadowMap.value=scene.lightFboMap.get(scene.lights[0]).texture;
     }
 }
 
