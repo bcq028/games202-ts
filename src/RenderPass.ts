@@ -40,9 +40,10 @@ export class CameraRenderPass {
     }
 
     draw_forward(scene: Scene, lightPos: [number, number, number]) {
-
+        let textureNum = 0;
         //TODO:clarify how to reorganize these swap data
         this.gl.viewport(0.0, 0.0, window.screen.width, window.screen.height);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
         scene.camera.updateMatrixWorld();
         let ModelMatrix = mat4.create();
         let ViewMatrix = mat4.create();
@@ -72,6 +73,15 @@ export class CameraRenderPass {
             main_camera_mesh_drawcall_batch.set(renderResource.rhiMaterials.get(entity), temp);
         }
 
+        for (let shadowUniform in renderResource.shadowStorageBufferObject) {
+            if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'texture') {
+                this.gl.activeTexture(this.gl.TEXTURE0 + textureNum);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, renderResource.shadowStorageBufferObject.uShadowMap.value);
+                this.gl.uniform1i(this.uniformLocation[shadowUniform], textureNum);
+                textureNum += 1;
+            }
+        }
+
         for (let [material, meshes] of main_camera_mesh_drawcall_batch) {
             if ('intensity' in scene.RhiMaterial2Material.get(material)) {
                 ModelMatrix = dynamicLightMatrix;
@@ -80,17 +90,6 @@ export class CameraRenderPass {
             }
             this.setShaderLocations(material.shaderProgram, [...Object.keys(scene.RhiMaterial2Material.get(material).uniforms), ...Object.keys(renderResource.shadowStorageBufferObject)], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
             this.gl.useProgram(material.shaderProgram);
-
-            //TODO: consider use phongStorageBufferObject
-            for (let shadowUniform in renderResource.shadowStorageBufferObject) {
-                if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'matrix4fv') {
-                    this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
-                } else if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'texture') {
-                    this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, renderResource.shadowStorageBufferObject.uShadowMap.value);
-                    this.gl.uniform1i(this.uniformLocation[shadowUniform], 0);
-                }
-            }
 
             scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
             scene.RhiMaterial2Material.get(material).uniforms['uViewMatrix'].value = ViewMatrix;
@@ -213,7 +212,6 @@ export class ShadowRenderPass {
     }
 
     draw_forward(scene: Scene, lightPos: [number, number, number]) {
-        let textureNum = 0;
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, scene.lightFboMap.get(scene.lights[0]).frameBuffer)
         const resolution = 2048;
         this.gl.viewport(0.0, 0.0, resolution, resolution);
@@ -260,11 +258,6 @@ export class ShadowRenderPass {
             for (let shadowUniform in renderResource.shadowStorageBufferObject) {
                 if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'matrix4fv') {
                     this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
-                } else if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'texture') {
-                    this.gl.activeTexture(this.gl.TEXTURE0 + textureNum);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, renderResource.shadowStorageBufferObject.uShadowMap.value);
-                    this.gl.uniform1i(this.uniformLocation[shadowUniform], textureNum);
-                    textureNum += 1;
                 }
             }
 

@@ -73,10 +73,7 @@ export class RenderPipeline {
         const camera_renderpass = new CameraRenderPass(gl);
 
         shadow_renderpass.setup();
-        for (let l = 0; l < scene.lights.length; l++) {
-            shadow_renderpass.draw_forward(scene, lightPos);
-            camera_renderpass.draw_forward(scene, lightPos);
-        }
-     
+        shadow_renderpass.draw_forward(scene, lightPos);
+        camera_renderpass.draw_forward(scene, lightPos);
     }
 }
