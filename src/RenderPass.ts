@@ -1,7 +1,7 @@
 import { mat4 } from "gl-matrix"
 import { Scene, renderResource } from "./Scene"
 import { RHIMaterial, RHIMesh, set_shader } from "./RHIData";
-import { shadowFragmentShader, shadowVertexShader } from "./loader";
+import { PhongFragmentShader, PhongVertexShader, shadowFragmentShader, shadowVertexShader } from "./loader";
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -18,8 +18,15 @@ export function reset_gl(gl: WebGLRenderingContext) {
 export class CameraRenderPass {
     uniformLocation: Record<string, WebGLUniformLocation> = {}
     attributeLayout: Record<string, number> = {}
+    program:WebGLProgram
     constructor(private gl: WebGLRenderingContext) {
 
+    }
+
+    setup() {
+        const vertexShader = shadowVertexShader
+        const fragmentShader = shadowFragmentShader
+        this.program=set_shader(this.gl, vertexShader, fragmentShader);
     }
 
     setShaderLocations(shaderProgram: WebGLProgram, uniforms: string[], attribs: string[]) {
@@ -88,8 +95,8 @@ export class CameraRenderPass {
             } else {
                 ModelMatrix = scaledMatrix;
             }
-            this.setShaderLocations(material.shaderProgram, [...Object.keys(scene.RhiMaterial2Material.get(material).uniforms), ...Object.keys(renderResource.shadowStorageBufferObject)], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
-            this.gl.useProgram(material.shaderProgram);
+            this.setShaderLocations(this.program, [...Object.keys(scene.RhiMaterial2Material.get(material).uniforms), ...Object.keys(renderResource.shadowStorageBufferObject)], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
+            this.gl.useProgram(this.program);
 
             scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
             scene.RhiMaterial2Material.get(material).uniforms['uViewMatrix'].value = ViewMatrix;
@@ -185,13 +192,14 @@ export class CameraRenderPass {
 export class ShadowRenderPass {
     uniformLocation: Record<string, WebGLUniformLocation> = {}
     attributeLayout: Record<string, number> = {}
+    program:WebGLProgram
     constructor(private gl: WebGLRenderingContext) {
     }
 
     setup() {
-        const vertexShader = shadowVertexShader
-        const fragmentShader = shadowFragmentShader
-        set_shader(this.gl, vertexShader, fragmentShader);
+        const vertexShader = PhongVertexShader
+        const fragmentShader = PhongFragmentShader
+        this.program=set_shader(this.gl, vertexShader, fragmentShader);
     }
 
     setShaderLocations(shaderProgram: WebGLProgram, uniforms: string[], attribs: string[]) {
@@ -251,8 +259,8 @@ export class ShadowRenderPass {
             } else {
                 ModelMatrix = scaledMatrix;
             }
-            this.setShaderLocations(material.shaderProgram, [...Object.keys(scene.RhiMaterial2Material.get(material).uniforms), ...Object.keys(renderResource.shadowStorageBufferObject)], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
-            this.gl.useProgram(material.shaderProgram);
+            this.setShaderLocations(this.program, ['uLightMVP'], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
+            this.gl.useProgram(this.program);
 
             //TODO: consider use phongStorageBufferObject
             for (let shadowUniform in renderResource.shadowStorageBufferObject) {
