@@ -24,8 +24,8 @@ export class CameraRenderPass {
     }
 
     setup() {
-        const vertexShader = shadowVertexShader
-        const fragmentShader = shadowFragmentShader
+        const vertexShader = PhongVertexShader
+        const fragmentShader = PhongFragmentShader
         this.program=set_shader(this.gl, vertexShader, fragmentShader);
     }
 
