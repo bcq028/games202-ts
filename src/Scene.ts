@@ -50,7 +50,6 @@ export class RenderResource {
         }
     }
     updatePerFrameBuffer(scene:Scene){
-        this.shadowStorageBufferObject.uLightMVP.value=scene.lights[0].transform.elements;
         this.shadowStorageBufferObject.uShadowMap.value=scene.lightFboMap.get(scene.lights[0]).texture;
     }
 }

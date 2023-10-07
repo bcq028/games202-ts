@@ -1,7 +1,7 @@
 import dat from "dat.gui";
 import { Scene, renderResource } from "./Scene";
 import { CameraRenderPass, ShadowRenderPass, reset_gl } from "./RenderPass";
-import { Vector, make_translation, multiply } from "./math/Matrix";
+import { Matrix, Vector, make_translation } from "./math/Matrix";
 
 interface GUIParams {
     modelTransX: number;
@@ -67,7 +67,7 @@ export class RenderPipeline {
 
         // TODO remove lightPos
         lightPos = [0, 100, 200];
-        scene.lights[0].transform=multiply(make_translation(Vector.from(0,100,200)),scene.lights[0].transform);
+        scene.lights[0].transform=Matrix.make_identity().multiply(make_translation(Vector.from(0,100,200)));
 
         const shadow_renderpass=new ShadowRenderPass(gl);
         const camera_renderpass = new CameraRenderPass(gl);

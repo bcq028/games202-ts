@@ -4,7 +4,7 @@ import { Scene, renderResource } from './Scene';
 import { RenderPipeline } from './RenderPipeline';
 import { loadOBJ } from './loader';
 import { Entity } from './Entity';
-import { Vector, make_scale, make_translation, multiply } from './math/Matrix';
+import { Vector, make_scale, make_translation } from './math/Matrix';
 
 
 async function main() {
@@ -17,13 +17,13 @@ async function main() {
   const scene = new Scene(canvas, gl);
   scene.addLight(pointLight);
   let e1 = await loadOBJ(scene, renderResource, 'assets/mary/', 'Marry');
-  e1.entities.forEach(entity => entity.transform = multiply(make_scale(new Vector([52, 52, 52])), entity.transform));
-  e1.entities.forEach(entity => entity.transform = multiply(make_translation(new Vector([-40, 0, 0])), entity.transform));
+  e1.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([52, 52, 52]))));
+  e1.entities.forEach(entity => entity.transform.multiply(make_translation(new Vector([-40, 0, 0]))));
   let e2 = await loadOBJ(scene, renderResource, 'assets/mary/', 'Marry');
-  e2.entities.forEach(entity => entity.transform = multiply(make_scale(new Vector([26, 26, 26])), entity.transform));
-  e2.entities.forEach(entity => entity.transform = multiply(make_translation(new Vector([40, 0, 0])), entity.transform));
+  e2.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([26, 26, 26]))));
+  e2.entities.forEach(entity => entity.transform.multiply(make_translation(new Vector([40, 0, 0]))));
   let e3 = await loadOBJ(scene, renderResource, 'assets/floor/', 'Floor');
-  e3.entities.forEach(entity => entity.transform = multiply(make_scale(new Vector([52, 52, 52])), entity.transform));
+  e3.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([52, 52, 52]))));
   window.scene = scene;
   const renderPipeline = new RenderPipeline()
 

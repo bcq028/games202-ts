@@ -18,7 +18,7 @@ export function reset_gl(gl: WebGLRenderingContext) {
 export class CameraRenderPass {
     uniformLocation: Record<string, WebGLUniformLocation> = {}
     attributeLayout: Record<string, number> = {}
-    program:WebGLProgram
+    program: WebGLProgram
     constructor(private gl: WebGLRenderingContext) {
 
     }
@@ -26,7 +26,7 @@ export class CameraRenderPass {
     setup() {
         const vertexShader = PhongVertexShader
         const fragmentShader = PhongFragmentShader
-        this.program=set_shader(this.gl, vertexShader, fragmentShader);
+        this.program = set_shader(this.gl, vertexShader, fragmentShader);
     }
 
     setShaderLocations(shaderProgram: WebGLProgram, uniforms: string[], attribs: string[]) {
@@ -192,14 +192,14 @@ export class CameraRenderPass {
 export class ShadowRenderPass {
     uniformLocation: Record<string, WebGLUniformLocation> = {}
     attributeLayout: Record<string, number> = {}
-    program:WebGLProgram
+    program: WebGLProgram
     constructor(private gl: WebGLRenderingContext) {
     }
 
     setup() {
-        const vertexShader = PhongVertexShader
-        const fragmentShader = PhongFragmentShader
-        this.program=set_shader(this.gl, vertexShader, fragmentShader);
+        const vertexShader = shadowVertexShader
+        const fragmentShader = shadowFragmentShader
+        this.program = set_shader(this.gl, vertexShader, fragmentShader);
     }
 
     setShaderLocations(shaderProgram: WebGLProgram, uniforms: string[], attribs: string[]) {
@@ -270,6 +270,7 @@ export class ShadowRenderPass {
             }
 
             for (let mesh of meshes) {
+                renderResource.shadowStorageBufferObject.uLightMVP.value = scene.RhiMesh2Entity.get(mesh).transform.elements;
                 if (mesh.vertexBuffer) {
                     const numComponents = 3;
                     const type = this.gl.FLOAT;
@@ -287,40 +288,7 @@ export class ShadowRenderPass {
                     this.gl.enableVertexAttribArray(
                         this.attributeLayout[scene.RhiMesh2Mesh.get(mesh).verticesName]);
                 }
-                if (mesh.normalBuffer) {
-                    const numComponents = 3;
-                    const type = this.gl.FLOAT;
-                    const normalize = false;
-                    const stride = 0;
-                    const offset = 0;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.normalBuffer);
-                    this.gl.vertexAttribPointer(
-                        this.attributeLayout[scene.RhiMesh2Mesh.get(mesh).normalsName],
-                        numComponents,
-                        type,
-                        normalize,
-                        stride,
-                        offset);
-                    this.gl.enableVertexAttribArray(
-                        this.attributeLayout[scene.RhiMesh2Mesh.get(mesh).normalsName]);
-                }
-                if (mesh.texcoordBuffer) {
-                    const numComponents = 2;
-                    const type = this.gl.FLOAT;
-                    const normalize = false;
-                    const stride = 0;
-                    const offset = 0;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.texcoordBuffer);
-                    this.gl.vertexAttribPointer(
-                        this.attributeLayout[scene.RhiMesh2Mesh.get(mesh).texcoordsName],
-                        numComponents,
-                        type,
-                        normalize,
-                        stride,
-                        offset);
-                    this.gl.enableVertexAttribArray(
-                        this.attributeLayout[scene.RhiMesh2Mesh.get(mesh).texcoordsName]);
-                }
+
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, mesh.indicesBuffer);
                 const vertexCount = scene.RhiMesh2Mesh.get(mesh).count;
                 const type = this.gl.UNSIGNED_SHORT;
