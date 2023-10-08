@@ -2,6 +2,7 @@ import { mat4 } from "gl-matrix"
 import { Scene, renderResource } from "./Scene"
 import { RHIMaterial, RHIMesh, set_shader } from "./RHIData";
 import { PhongFragmentShader, PhongVertexShader, shadowFragmentShader, shadowVertexShader } from "./loader";
+import { Matrix } from "./math/Matrix";
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -54,7 +55,6 @@ export class CameraRenderPass {
         scene.camera.updateMatrixWorld();
         let ModelMatrix = mat4.create();
         let ViewMatrix = mat4.create();
-        let projectionMatrix = mat4.create();
         mat4.invert(ViewMatrix, scene.camera.matrixWorld.elements as [
             number, number, number, number,
             number, number, number, number,
@@ -65,12 +65,7 @@ export class CameraRenderPass {
         mat4.translate(dynamicLightMatrix, dynamicLightMatrix, lightPos);
         let scaledMatrix = structuredClone(ModelMatrix);
 
-        mat4.copy(projectionMatrix, scene.camera.projectionMatrix.elements as unknown as [
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number
-        ]);
+        let projectionMatrix=Matrix.makePerspectiveByFov(0.01,1000,100,2560/1440).elements;
 
         const main_camera_mesh_drawcall_batch = new Map<RHIMaterial, RHIMesh[]>();
 

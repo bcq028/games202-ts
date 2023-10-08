@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RHIFrameBuffer, RHIMaterial, RHIMesh, createFBO, createWebGLMaterial, createWebGLMesh } from './RHIData';
 import { Material } from './Material';
 import { Mesh } from './Mesh';
+import { Matrix } from './math/Matrix';
 
 const cameraPosition = [-20, 180, 250];
 
@@ -50,6 +51,7 @@ export class RenderResource {
         }
     }
     updatePerFrameBuffer(scene:Scene){
+        this.shadowStorageBufferObject.uLightMVP.value=Matrix.makePerspectiveByFov(0.1,10,90,1).elements;
         this.shadowStorageBufferObject.uShadowMap.value=scene.lightFboMap.get(scene.lights[0]).texture;
     }
 }
