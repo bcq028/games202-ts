@@ -1,7 +1,8 @@
 import { Scene, renderResource } from "./Scene"
 import { RHIMaterial, RHIMesh, set_shader } from "./RHIData";
 import { PhongFragmentShader, PhongVertexShader, shadowFragmentShader, shadowVertexShader } from "./loader";
-import { Matrix, Vector } from "./math/Matrix";
+import { Matrix, Vector, lookAt } from "./math/Matrix";
+import { PointLight } from './Entity'
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -59,7 +60,7 @@ export class CameraRenderPass {
         ModelMatrix.translate(new Vector(lightPos));
         let scaledMatrix = structuredClone(ModelMatrix);
 
-        let projectionMatrix=Matrix.makePerspectiveByFov(0.01,1000,100,2560/1440).elements;
+        let projectionMatrix = Matrix.makePerspectiveByFov(0.01, 1000, 100, 2560 / 1440).elements;
 
         const main_camera_mesh_drawcall_batch = new Map<RHIMaterial, RHIMesh[]>();
 
@@ -208,17 +209,17 @@ export class ShadowRenderPass {
         }
     }
 
-    draw_forward(scene: Scene, lightPos: [number, number, number]) {
+    draw_forward(scene: Scene, light: PointLight) {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, scene.lightFboMap.get(scene.lights[0]).frameBuffer)
         const resolution = 2048;
         this.gl.viewport(0.0, 0.0, resolution, resolution);
         //TODO:clarify how to reorganize these swap data
         scene.camera.updateMatrixWorld();
-    
+
         let ModelMatrix = Matrix.make_identity();
         let ViewMatrix = new Matrix(scene.camera.matrixWorld.elements);
         ViewMatrix.invert();
-        ModelMatrix.translate(new Vector(lightPos));
+        ModelMatrix.translate(light.lightPos);
         let dynamicLightMatrix = structuredClone(ModelMatrix);
         let scaledMatrix = structuredClone(ModelMatrix);
 
@@ -247,7 +248,11 @@ export class ShadowRenderPass {
             }
 
             for (let mesh of meshes) {
-                renderResource.shadowStorageBufferObject.uLightMVP.value = scene.RhiMesh2Entity.get(mesh).transform.elements;
+                //update ULightMVP
+                const lightMVP = new Matrix(scene.RhiMesh2Entity.get(mesh).transform.elements);
+                lightMVP.multiply(lookAt(light.lightPos, light.focalPoint, light.lightUp));
+                lightMVP.multiply(Matrix.makePerspectiveByFov(0.01, 1000, 100, 2560 / 1440));
+                renderResource.shadowStorageBufferObject.uLightMVP.value = lightMVP.elements;
                 if (mesh.vertexBuffer) {
                     const numComponents = 3;
                     const type = this.gl.FLOAT;

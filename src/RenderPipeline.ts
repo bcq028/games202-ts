@@ -51,7 +51,7 @@ export class RenderPipeline {
         panelModelScale.open();
     }
 
-    updatePerFrameBuffer(scene:Scene){
+    updatePerFrameBuffer(scene: Scene) {
         renderResource.updatePerFrameBuffer(scene);
     }
 
@@ -65,17 +65,14 @@ export class RenderPipeline {
         Math.cos(timer * 4) * 150,
         Math.cos(timer * 2) * 100] as [number, number, number];
 
-        // TODO remove lightPos
-        lightPos = [0, 100, 200];
-        scene.lights[0].transform=Matrix.make_identity().multiply(make_translation(Vector.from(0,100,200)));
 
-        const shadow_renderpass=new ShadowRenderPass(gl);
+        const shadow_renderpass = new ShadowRenderPass(gl);
         const camera_renderpass = new CameraRenderPass(gl);
 
         shadow_renderpass.setup();
         camera_renderpass.setup();
-        
-        shadow_renderpass.draw_forward(scene, lightPos);
-        camera_renderpass.draw_forward(scene, lightPos);
+
+        shadow_renderpass.draw_forward(scene, scene.lights[0]);
+        camera_renderpass.draw_forward(scene, scene.lights[0].lightPos.elements as [number, number, number]);
     }
 }

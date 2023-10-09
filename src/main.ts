@@ -3,8 +3,8 @@ import { cube } from './Mesh';
 import { Scene, renderResource } from './Scene';
 import { RenderPipeline } from './RenderPipeline';
 import { loadOBJ } from './loader';
-import { Entity } from './Entity';
-import { Vector, make_scale, make_translation } from './math/Matrix';
+import { PointLight } from './Entity';
+import { Matrix, Vector, make_scale, make_translation } from './math/Matrix';
 
 
 async function main() {
@@ -12,7 +12,11 @@ async function main() {
   canvas.width = window.screen.width;
   canvas.height = window.screen.height;
   const gl = canvas.getContext('webgl')!;
-  const pointLight = new Entity(cube(), new EmissiveMaterial(250, [1, 1, 1]));
+  const pointLight = new PointLight(cube(), new EmissiveMaterial(250, [1, 1, 1]));
+  pointLight.focalPoint = new Vector([0, 0, 0]);
+  pointLight.lightUp = new Vector([0, 1, 0]);
+  pointLight.lightPos = new Vector([0, 80, 80]);
+  pointLight.transform = Matrix.make_identity().translate(pointLight.lightPos);
 
   const scene = new Scene(canvas, gl);
   scene.addLight(pointLight);

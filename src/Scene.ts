@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Entity } from "./Entity";
+import { Entity, PointLight } from "./Entity";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RHIFrameBuffer, RHIMaterial, RHIMesh, createFBO, createWebGLMaterial, createWebGLMesh } from './RHIData';
 import { Material } from './Material';
@@ -60,7 +60,7 @@ export const renderResource = new RenderResource()
 
 export class Scene {
     public entities: Entity[] = [];
-    public lights: Entity[] = []
+    public lights: PointLight[] = []
     public rhiBatchedEntities: Map<RHIMaterial, RHIMesh[]> = new Map();
     public RhiMaterial2Material: Map<RHIMaterial, Material> = new Map();
     public RhiMesh2Mesh: Map<RHIMesh, Mesh> = new Map();
@@ -90,7 +90,7 @@ export class Scene {
         entry.push(rhiMesh);
         this.rhiBatchedEntities.set(rhiMaterial, entry);
     }
-    public addLight(light: Entity) {
+    public addLight(light: PointLight) {
         this.lights.push(light);
         this.addEntity(light);
         this.lightFboMap.set(light, createFBO(this.gl));
