@@ -1,8 +1,7 @@
-import { mat4 } from "gl-matrix"
 import { Scene, renderResource } from "./Scene"
 import { RHIMaterial, RHIMesh, set_shader } from "./RHIData";
 import { PhongFragmentShader, PhongVertexShader, shadowFragmentShader, shadowVertexShader } from "./loader";
-import { Matrix } from "./math/Matrix";
+import { Matrix, Vector } from "./math/Matrix";
 
 export function reset_gl(gl: WebGLRenderingContext) {
 
@@ -53,16 +52,11 @@ export class CameraRenderPass {
         this.gl.viewport(0.0, 0.0, window.screen.width, window.screen.height);
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
         scene.camera.updateMatrixWorld();
-        let ModelMatrix = mat4.create();
-        let ViewMatrix = mat4.create();
-        mat4.invert(ViewMatrix, scene.camera.matrixWorld.elements as [
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number
-        ]);
+        let ModelMatrix = Matrix.make_identity();
+        let ViewMatrix = new Matrix(scene.camera.matrixWorld.elements);
+        ViewMatrix.invert();
         let dynamicLightMatrix = structuredClone(ModelMatrix);
-        mat4.translate(dynamicLightMatrix, dynamicLightMatrix, lightPos);
+        ModelMatrix.translate(new Vector(lightPos));
         let scaledMatrix = structuredClone(ModelMatrix);
 
         let projectionMatrix=Matrix.makePerspectiveByFov(0.01,1000,100,2560/1440).elements;
@@ -94,7 +88,7 @@ export class CameraRenderPass {
             this.gl.useProgram(this.program);
 
             scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
-            scene.RhiMaterial2Material.get(material).uniforms['uViewMatrix'].value = ViewMatrix;
+            scene.RhiMaterial2Material.get(material).uniforms['uViewMatrix'].value = ViewMatrix.elements;
             scene.RhiMaterial2Material.get(material).uniforms['uCameraPos'].value = [scene.camera.position.x, scene.camera.position.y, scene.camera.position.z];
             scene.RhiMaterial2Material.get(material).uniforms['uLightPos'].value = lightPos;
             for (let mesh of meshes) {
@@ -220,25 +214,13 @@ export class ShadowRenderPass {
         this.gl.viewport(0.0, 0.0, resolution, resolution);
         //TODO:clarify how to reorganize these swap data
         scene.camera.updateMatrixWorld();
-        let ModelMatrix = mat4.create();
-        let ViewMatrix = mat4.create();
-        let projectionMatrix = mat4.create();
-        mat4.invert(ViewMatrix, scene.camera.matrixWorld.elements as [
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number
-        ]);
+    
+        let ModelMatrix = Matrix.make_identity();
+        let ViewMatrix = new Matrix(scene.camera.matrixWorld.elements);
+        ViewMatrix.invert();
+        ModelMatrix.translate(new Vector(lightPos));
         let dynamicLightMatrix = structuredClone(ModelMatrix);
-        mat4.translate(dynamicLightMatrix, dynamicLightMatrix, lightPos);
         let scaledMatrix = structuredClone(ModelMatrix);
-
-        mat4.copy(projectionMatrix, scene.camera.projectionMatrix.elements as unknown as [
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number,
-            number, number, number, number
-        ]);
 
         const main_camera_mesh_drawcall_batch = new Map<RHIMaterial, RHIMesh[]>();
 

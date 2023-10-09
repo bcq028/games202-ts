@@ -169,6 +169,12 @@ export class Matrix {
 
     }
 
+    public translate(t: Vector) {
+        this.elements=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, t.elements[0], t.elements[1], t.elements[2], 1]
+        return this
+    }
+    
+
 }
 
 export class Vector {

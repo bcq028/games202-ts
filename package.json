@@ -24,7 +24,6 @@
   "dependencies": {
     "@types/dat.gui": "^0.7.10",
     "dat.gui": "^0.7.9",
-    "gl-matrix": "^3.4.3",
     "three": "^0.156.1"
   }
 }
