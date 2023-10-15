@@ -85,7 +85,7 @@ export class CameraRenderPass {
             } else {
                 ModelMatrix = scaledMatrix;
             }
-            this.setShaderLocations(this.program, [...Object.keys(scene.RhiMaterial2Material.get(material).uniforms), ...Object.keys(renderResource.shadowStorageBufferObject)], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
+            this.setShaderLocations(this.program, [...Object.keys(scene.RhiMaterial2Material.get(material).uniforms), ...Object.keys(renderResource.shadowStorageBufferObject)], ['aVertexPosition','aNormalPosition','aTextureCoord']);
             this.gl.useProgram(this.program);
 
             scene.RhiMaterial2Material.get(material).uniforms['uProjectionMatrix'].value = projectionMatrix;
@@ -220,32 +220,22 @@ export class ShadowRenderPass {
         let ViewMatrix = new Matrix(scene.camera.matrixWorld.elements);
         ViewMatrix.invert();
         ModelMatrix.translate(light.lightPos);
-        let dynamicLightMatrix = structuredClone(ModelMatrix);
-        let scaledMatrix = structuredClone(ModelMatrix);
 
-        const main_camera_mesh_drawcall_batch = new Map<RHIMaterial, RHIMesh[]>();
+        const shadow_drawcall_batch = new Map<RHIMaterial, RHIMesh[]>();
 
         for (let entity of scene.entities) {
-            const temp = main_camera_mesh_drawcall_batch.get(renderResource.rhiMaterials.get(entity)) || [];
+            const temp = shadow_drawcall_batch.get(renderResource.rhiMaterials.get(entity)) || [];
             temp.push(renderResource.rhiMeshes.get(entity));
-            main_camera_mesh_drawcall_batch.set(renderResource.rhiMaterials.get(entity), temp);
+            shadow_drawcall_batch.set(renderResource.rhiMaterials.get(entity), temp);
         }
 
-        for (let [material, meshes] of main_camera_mesh_drawcall_batch) {
-            if ('intensity' in scene.RhiMaterial2Material.get(material)) {
-                ModelMatrix = dynamicLightMatrix;
-            } else {
-                ModelMatrix = scaledMatrix;
-            }
-            this.setShaderLocations(this.program, ['uLightMVP'], Object.keys(scene.RhiMesh2Mesh.get(meshes[0]).attribs));
+        for (let [_, meshes] of shadow_drawcall_batch) {
+           
+            this.setShaderLocations(this.program, ['uLightMVP'], ['aVertexPosition','aNormalPosition','aTextureCoord']);
             this.gl.useProgram(this.program);
 
-            //TODO: consider use phongStorageBufferObject
-            for (let shadowUniform in renderResource.shadowStorageBufferObject) {
-                if (renderResource.shadowStorageBufferObject[shadowUniform].type == 'matrix4fv') {
-                    this.gl.uniformMatrix4fv(this.uniformLocation[shadowUniform], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
-                }
-            }
+            this.gl.uniformMatrix4fv(this.uniformLocation['uLightMVP'], false, renderResource.shadowStorageBufferObject.uLightMVP.value);
+
 
             for (let mesh of meshes) {
                 //update ULightMVP

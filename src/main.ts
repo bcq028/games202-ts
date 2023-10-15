@@ -21,13 +21,13 @@ async function main() {
   const scene = new Scene(canvas, gl);
   scene.addLight(pointLight);
   let e1 = await loadOBJ(scene, renderResource, 'assets/mary/', 'Marry');
-  e1.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([52, 52, 52]))));
-  e1.entities.forEach(entity => entity.transform.multiply(make_translation(new Vector([-40, 0, 0]))));
+  e1.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([10,10,10]))));
+  e1.entities.forEach(entity => entity.transform.multiply(make_translation(new Vector([40,0,-40]))));
   let e2 = await loadOBJ(scene, renderResource, 'assets/mary/', 'Marry');
-  e2.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([26, 26, 26]))));
-  e2.entities.forEach(entity => entity.transform.multiply(make_translation(new Vector([40, 0, 0]))));
+  e2.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([20,20,20]))));
   let e3 = await loadOBJ(scene, renderResource, 'assets/floor/', 'Floor');
-  e3.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([52, 52, 52]))));
+  e3.entities.forEach(entity => entity.transform.multiply(make_scale(new Vector([4,4,4]))));
+  e3.entities.forEach(entity => entity.transform.multiply(make_translation(new Vector([0,0,-30]))));
   window.scene = scene;
   const renderPipeline = new RenderPipeline()
 

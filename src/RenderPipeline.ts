@@ -1,7 +1,6 @@
 import dat from "dat.gui";
 import { Scene, renderResource } from "./Scene";
 import { CameraRenderPass, ShadowRenderPass, reset_gl } from "./RenderPass";
-import { Matrix, Vector, make_translation } from "./math/Matrix";
 
 interface GUIParams {
     modelTransX: number;
@@ -58,13 +57,6 @@ export class RenderPipeline {
     render_forward(gl: WebGLRenderingContext, scene: Scene) {
 
         reset_gl(gl)
-
-        // Handle light
-        const timer = Date.now() * 0.00025;
-        let lightPos = [Math.sin(timer * 6) * 100,
-        Math.cos(timer * 4) * 150,
-        Math.cos(timer * 2) * 100] as [number, number, number];
-
 
         const shadow_renderpass = new ShadowRenderPass(gl);
         const camera_renderpass = new CameraRenderPass(gl);
